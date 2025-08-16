@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle, AlertTriangle, XCircle, Pill, Info } from "lucide-react"
@@ -94,9 +95,11 @@ export function PillDetailPanel({ pill }: PillDetailPanelProps) {
               <div>
                 <h4 className="font-semibold mb-2">Detected Region</h4>
                 <div className="flex flex-col items-start">
-                  <img
+                  <Image
                     src={pill.thumbnail}
                     alt={`Pill ${pill.pillId}`}
+                    width={256}
+                    height={192}
                     className="w-full max-w-xs h-48 object-cover rounded-lg border"
                   />
                   <Badge className="mt-2 bg-black/70 text-white">

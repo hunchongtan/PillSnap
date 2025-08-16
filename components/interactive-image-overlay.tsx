@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback } from "react"
+import Image from "next/image"
 import { MultiPillUtils, type MultiPillResults, type ClassifiedPill } from "@/lib/multi-pill-classifier"
 
 interface InteractiveImageOverlayProps {
@@ -92,8 +93,8 @@ export function InteractiveImageOverlay({
         ref={containerRef}
         className="relative w-full h-[600px] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg"
       >
-        <img
-          ref={imageRef}
+        <Image
+          ref={imageRef as any}
           src={imageUrl}
           alt="Pill analysis"
           onLoad={handleImageLoad}
@@ -108,6 +109,9 @@ export function InteractiveImageOverlay({
                 }
               : { display: "none" }
           }
+          width={imageRenderedSize.width || 1}
+          height={imageRenderedSize.height || 1}
+          unoptimized
         />
         {imageLoaded && results.pillResults.map((pill) => {
           const scaledBox = getScaledBoundingBox(pill.boundingBox)
