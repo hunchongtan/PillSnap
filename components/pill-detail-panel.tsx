@@ -33,11 +33,6 @@ export function PillDetailPanel({ pill, onClose }: PillDetailPanelProps) {
     return "text-red-600"
   }
 
-  const getConfidenceBadge = (confidence: number) => {
-    if (confidence >= 90) return <Badge className="bg-green-100 text-green-800">High Confidence</Badge>
-    if (confidence >= 80) return <Badge variant="secondary">Medium Confidence</Badge>
-    return <Badge variant="destructive">Low Confidence</Badge>
-  }
 
   return (
     <div className="space-y-6 relative">

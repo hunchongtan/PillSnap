@@ -42,7 +42,7 @@ export default function PillIdentifier() {
     return typeof err === 'object' && err !== null && 'message' in err;
   }
   // Single pill results (legacy)
-  const [results, setResults] = useState<PillMatch[]>([])
+  // const [results, setResults] = useState<PillMatch[]>([])
   const [showResults, setShowResults] = useState(false)
 
   // Multi-pill results (new)
@@ -510,98 +510,6 @@ export default function PillIdentifier() {
           </div>
         )}
 
-        {showResults && (
-          <div className="max-w-4xl mx-auto space-y-6">
-            <div className="grid gap-6">
-              {results.map((pill, index) => (
-                <Card key={pill.id} className="relative">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                          <Badge variant="outline" className="text-lg px-3 py-1">
-                            #{index + 1}
-                          </Badge>
-                          <CardTitle className="text-xl">{pill.name}</CardTitle>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Generic: {pill.genericName}</span>
-                          {pill.brandName && (
-                            <>
-                              <span className="text-gray-400">•</span>
-                              <span className="text-sm text-gray-600 dark:text-gray-400">Brand: {pill.brandName}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className={`w-3 h-3 rounded-full ${getConfidenceColor(pill.confidence)}`} />
-                          <span className="font-semibold text-lg">{pill.confidence}%</span>
-                        </div>
-                        <Badge
-                          variant={
-                            pill.confidence >= 90 ? "default" : pill.confidence >= 80 ? "secondary" : "destructive"
-                          }
-                        >
-                          {getConfidenceText(pill.confidence)} Confidence
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="space-y-3">
-                        <h4 className="font-semibold text-gray-900 dark:text-white">Physical Characteristics</h4>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <span className="text-gray-600 dark:text-gray-400">Imprint:</span>
-                            <p className="font-medium">{pill.imprint}</p>
-                          </div>
-                          <div>
-                            <span className="text-gray-600 dark:text-gray-400">Shape:</span>
-                            <p className="font-medium">{pill.shape}</p>
-                          </div>
-                          <div>
-                            <span className="text-gray-600 dark:text-gray-400">Color:</span>
-                            <p className="font-medium">{pill.color}</p>
-                          </div>
-                          <div>
-                            <span className="text-gray-600 dark:text-gray-400">Size:</span>
-                            <p className="font-medium">{pill.size}</p>
-                          </div>
-                          {pill.scoring && (
-                            <div className="col-span-2">
-                              <span className="text-gray-600 dark:text-gray-400">Scoring:</span>
-                              <p className="font-medium">{pill.scoring}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        <h4 className="font-semibold text-gray-900 dark:text-white">Medication Information</h4>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{pill.description}</p>
-                        <div className="flex items-center gap-2 text-sm">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                          <span className="text-gray-600 dark:text-gray-400">Match found in FDA database</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Next Steps:</strong> Verify identification with pharmacy records, patient history, or chemical
-                analysis if confidence is low. Always confirm with a licensed pharmacist before administering
-                medication.
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
 
       </div>
     </div>
