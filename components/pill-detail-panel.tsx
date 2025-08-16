@@ -6,10 +6,9 @@ import { MultiPillUtils, type ClassifiedPill } from "@/lib/multi-pill-classifier
 
 interface PillDetailPanelProps {
   pill: ClassifiedPill
-  onClose?: () => void
 }
 
-export function PillDetailPanel({ pill, onClose }: PillDetailPanelProps) {
+export function PillDetailPanel({ pill }: PillDetailPanelProps) {
   const bestMatch = MultiPillUtils.getBestMatch(pill)
   const allMatches = pill.identifications
 

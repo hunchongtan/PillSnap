@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import Image from "next/image"
 import { useState } from "react"
 import { Upload, Camera, AlertTriangle, CheckCircle, Clock, Grid, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -148,10 +149,13 @@ export default function PillIdentifier() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div>
-              <img
+              <Image
                 src="/icon.svg"
                 alt="PillSnap Icon"
+                width={60}
+                height={60}
                 className="h-15 w-15"
+                priority
               />
             </div>
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white">PillSnap</h1>
@@ -175,9 +179,11 @@ export default function PillIdentifier() {
               <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
                 {imagePreview ? (
                   <div className="space-y-4">
-                    <img
+                    <Image
                       src={imagePreview || "/placeholder.svg"}
                       alt="Uploaded pill"
+                      width={400}
+                      height={256}
                       className="max-w-full max-h-64 mx-auto rounded-lg shadow-md"
                     />
                     <p className="text-sm text-gray-600 dark:text-gray-400">Image uploaded successfully</p>
@@ -392,9 +398,11 @@ export default function PillIdentifier() {
                           <div className="space-y-3">
                             <h4 className="font-semibold text-gray-900 dark:text-white">Detected Region</h4>
                             <div className="relative">
-                              <img
+                              <Image
                                 src={pill.thumbnail}
                                 alt={`Pill ${pill.pillId}`}
+                                width={256}
+                                height={128}
                                 className="w-full h-32 object-cover rounded-lg border"
                               />
                               <Badge className="absolute top-2 right-2 bg-black/70 text-white">
@@ -479,7 +487,7 @@ export default function PillIdentifier() {
                   />
                 </CardHeader>
                 <CardContent>
-                  <PillDetailPanel pill={getSelectedPill()!} onClose={() => setSelectedPillId(null)} />
+                  <PillDetailPanel pill={getSelectedPill()!} />
                 </CardContent>
               </Card>
             )}
