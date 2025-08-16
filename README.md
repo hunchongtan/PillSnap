@@ -11,9 +11,6 @@
 - Displays confidence, generic/brand names, and bounding box details.
 - Modern, responsive UI (Next.js, Tailwind, shadcn/ui).
 
-## Demo  
-Try it live here: [pill-snap.vercel.app](https://pill-snap.vercel.app/)  
-
 ## Usage
 
 1. Clone the repo and install dependencies:
