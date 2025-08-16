@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle, AlertTriangle, XCircle, Pill, Info } from "lucide-react"
-import { CloseX } from "@/components/close-x"
 import { MultiPillUtils, type ClassifiedPill } from "@/lib/multi-pill-classifier"
 
 interface PillDetailPanelProps {
@@ -39,11 +38,6 @@ export function PillDetailPanel({ pill, onClose }: PillDetailPanelProps) {
       {/* Header */}
       <Card>
         <CardHeader className="pb-2 relative">
-          {onClose && (
-            <div className="absolute top-2 right-2 z-10">
-              <CloseX onClick={onClose} />
-            </div>
-          )}
           <header className="flex items-center justify-between gap-3 w-full min-w-0 flex-wrap">
             {/* Left cluster: tag, icon, title */}
             <div className="flex items-center gap-2 min-w-0 flex-1">

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { MultiPillClassifier, type MultiPillResults, MultiPillUtils } from "@/lib/multi-pill-classifier"
 import { PillDetailPanel } from "@/components/pill-detail-panel"
+import { CloseX } from "@/components/close-x"
 import dynamic from "next/dynamic"
 import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
@@ -468,13 +469,14 @@ export default function PillIdentifier() {
             {/* Detail Panel */}
             {selectedPillId && getSelectedPill() && (
               <Card className="border-blue-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>Detailed Analysis</span>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedPillId(null)}>
-                      X
-                    </Button>
-                  </CardTitle>
+                <CardHeader className="relative pt-3 pr-10 pb-2">
+                  <CardTitle>Detailed Analysis</CardTitle>
+                  {/* single close button, positioned to top-right of the header */}
+                  <CloseX
+                    onClick={() => setSelectedPillId(null)}
+                    className="absolute top-2 right-5"
+                    aria-label="Close"
+                  />
                 </CardHeader>
                 <CardContent>
                   <PillDetailPanel pill={getSelectedPill()!} onClose={() => setSelectedPillId(null)} />

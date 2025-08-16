@@ -1,5 +1,6 @@
 
-import React, { useRef } from "react"
+
+import React, { useRef, useState } from "react"
 import { CloseX } from "@/components/close-x"
 
 interface WebcamCaptureProps {
@@ -11,10 +12,19 @@ export default function WebcamCapture({ onCapture, onClose }: WebcamCaptureProps
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  function getDefaultFacingMode() {
+    if (typeof window !== "undefined") {
+      const ua = window.navigator.userAgent
+      const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop|Mobile/i.test(ua)
+      return isMobile ? "environment" : "user"
+    }
+    return "user"
+  }
+  const facingMode = getDefaultFacingMode()
 
   React.useEffect(() => {
     let active = true
-    navigator.mediaDevices.getUserMedia({ video: true })
+    navigator.mediaDevices.getUserMedia({ video: { facingMode } })
       .then((s) => {
         if (!active) {
           s.getTracks().forEach((t) => t.stop())
@@ -37,6 +47,8 @@ export default function WebcamCapture({ onCapture, onClose }: WebcamCaptureProps
       }
     }
   }, [onClose])
+
+
 
   const stopStream = () => {
     if (streamRef.current) {
@@ -74,6 +86,7 @@ export default function WebcamCapture({ onCapture, onClose }: WebcamCaptureProps
         {/* OUTER close button, top-right, relative to card wrapper */}
         <CloseX onClick={handleCancel} className="absolute top-2 right-2" />
         <video ref={videoRef} autoPlay playsInline className="rounded w-full h-48 object-cover mb-2 mt-6" />
+  {/* Switch Camera button removed for realistic default view */}
         <canvas ref={canvasRef} className="hidden" />
         <div className="flex gap-2 w-full mt-2">
           <button
