@@ -84,6 +84,8 @@ export function InteractiveImageOverlay({
     }
   }
 
+  const imageLoaded = imageRef.current && imageRef.current.naturalWidth > 0 && imageRef.current.naturalHeight > 0;
+
   return (
     <>
       <div
@@ -96,14 +98,18 @@ export function InteractiveImageOverlay({
           alt="Pill analysis"
           onLoad={handleImageLoad}
           className="absolute"
-          style={{
-            width: imageRenderedSize.width,
-            height: imageRenderedSize.height,
-            top: imageRenderedSize.y,
-            left: imageRenderedSize.x,
-          }}
+          style={
+            imageLoaded
+              ? {
+                  width: imageRenderedSize.width,
+                  height: imageRenderedSize.height,
+                  top: imageRenderedSize.y,
+                  left: imageRenderedSize.x,
+                }
+              : { display: "none" }
+          }
         />
-        {results.pillResults.map((pill) => {
+        {imageLoaded && results.pillResults.map((pill) => {
           const scaledBox = getScaledBoundingBox(pill.boundingBox)
           const bestMatch = MultiPillUtils.getBestMatch(pill)
           const isSelected = pill.pillId === selectedPillId
@@ -127,7 +133,7 @@ export function InteractiveImageOverlay({
             >
               {isHovered && (
                 <div
-                  className="absolute -top-7 left-0 whitespace-nowrap text-black font-semibold px-2 py-0.5 rounded"
+                  className="absolute -top-7 left-0 whitespace-nowrap text-black font-semibold px-1.5 py-0.5 rounded text-xs sm:text-sm max-w-[80vw] overflow-hidden text-ellipsis"
                   style={{
                     textShadow: '0 0 2px #fff, 0 0 2px #fff, 1px 1px 2px #fff, -1px -1px 2px #fff',
                     background: 'rgba(255,255,255,0.01)'
@@ -139,9 +145,11 @@ export function InteractiveImageOverlay({
             </div>
           )
         })}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-3 py-1 rounded-full">
-          Click on pills to select • Hover for details
-        </div>
+        {imageLoaded && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1 rounded-full max-w-[90vw] text-center truncate">
+            Click on pills to select • Hover for details
+          </div>
+        )}
       </div>
     </>
   )

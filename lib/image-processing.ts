@@ -132,45 +132,7 @@ export function preprocessImageForDetection(img: HTMLImageElement): string {
 
 /**
  * Simulates pill detection using basic image analysis
- * In production, this would be replaced with actual computer vision
- */
-export function simulatePillDetection(img: HTMLImageElement): DetectedPill[] {
-  const canvas = createCanvas(img.width, img.height)
-  const ctx = canvas.getContext("2d")!
-  ctx.drawImage(img, 0, 0)
 
-  // For demo purposes, create mock detections based on image dimensions
-  // In reality, this would use OpenCV, YOLO, or similar CV algorithms
-  const detections: DetectedPill[] = []
-
-  // Simulate finding 1-3 pills in different regions
-  const numPills = Math.floor(Math.random() * 3) + 1
-
-  for (let i = 0; i < numPills; i++) {
-    const pillSize = Math.min(img.width, img.height) * (0.15 + Math.random() * 0.1) // 15-25% of image
-    const x = Math.random() * (img.width - pillSize)
-    const y = Math.random() * (img.height - pillSize)
-
-    const boundingBox: BoundingBox = {
-      x: Math.floor(x),
-      y: Math.floor(y),
-      width: Math.floor(pillSize),
-      height: Math.floor(pillSize),
-    }
-
-    // Crop the detected region
-    const croppedImage = cropImageRegion(img, boundingBox)
-
-    detections.push({
-      id: i + 1,
-      boundingBox,
-      confidence: 0.7 + Math.random() * 0.25, // 70-95% confidence
-      croppedImage,
-    })
-  }
-
-  return detections
-}
 
 /**
  * Validates image dimensions and quality for pill detection

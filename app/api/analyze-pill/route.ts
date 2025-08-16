@@ -66,16 +66,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(
-      `Processing image: ${file.name}, size: ${file.size} bytes, type: ${file.type}`
-    );
 
     // Convert file to base64
     const bytes = await file.arrayBuffer();
     const base64 = Buffer.from(bytes).toString("base64");
     const dataUrl = `data:${file.type};base64,${base64}`;
 
-    console.log("Sending request to OpenAI via AI SDK...");
 
     const result = await generateObject({
       model: openai("gpt-4o-mini"),
@@ -150,10 +146,6 @@ export async function POST(request: NextRequest) {
       temperature: 0.2, // Lowered temperature for more consistent medical identification
     });
 
-    console.log("Received response from OpenAI");
-    console.log(
-      `Successfully identified ${result.object.results.length} potential matches`
-    );
 
     return NextResponse.json(result.object);
   } catch (error: unknown) {

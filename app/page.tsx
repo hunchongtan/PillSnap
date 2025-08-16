@@ -9,6 +9,11 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { MultiPillClassifier, type MultiPillResults, MultiPillUtils } from "@/lib/multi-pill-classifier"
 import { PillDetailPanel } from "@/components/pill-detail-panel"
+import dynamic from "next/dynamic"
+import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog"
+import * as DialogPrimitive from "@radix-ui/react-dialog"
+
+const WebcamCapture = dynamic(() => import("@/components/webcam-capture"), { ssr: false })
 import { InteractiveImageOverlay } from "@/components/interactive-image-overlay"
 
 interface PillMatch {
@@ -28,6 +33,7 @@ interface PillMatch {
 export default function PillIdentifier() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [showWebcam, setShowWebcam] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisStep, setAnalysisStep] = useState<string>("")
 
@@ -64,6 +70,29 @@ export default function PillIdentifier() {
     }
   }
 
+  // Handle photo taken from webcam
+  function dataURLtoFile(dataUrl: string, filename: string) {
+    const arr = dataUrl.split(',');
+    const mime = arr[0].match(/:(.*?);/)![1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+  }
+
+  const handleWebcamCapture = (dataUrl: string) => {
+    const file = dataURLtoFile(dataUrl, "webcam-photo.jpg");
+    setImagePreview(dataUrl)
+    setSelectedImage(file)
+    setShowWebcam(false)
+    setShowResults(false)
+    setShowMultiResults(false)
+    setError(null)
+  }
+
   const analyzePill = async () => {
     if (!selectedImage) return
 
@@ -74,8 +103,6 @@ export default function PillIdentifier() {
     setAnalysisStep("Detecting pills in image...")
 
     try {
-      // Use multi-pill workflow
-  // setProcessingMode removed
       const results = await classifier.processImage(selectedImage)
 
       if (!results.success || results.pillCount === 0) {
@@ -83,34 +110,13 @@ export default function PillIdentifier() {
         return
       }
 
-      // Check if we should use single-pill display
-      if (MultiPillClassifier.shouldUseSinglePillWorkflow(results.pillCount)) {
-  // setProcessingMode removed
-        const pill = results.pillResults[0]
-        const bestMatch = MultiPillUtils.getBestMatch(pill)
-
-        if (bestMatch) {
-          const singleResults = [
-            {
-              id: `pill-${pill.pillId}`,
-              ...bestMatch,
-            },
-          ]
-          setResults(singleResults)
-          setShowResults(true)
-        } else {
-          setError("Pill detected but could not be identified with confidence. Consider manual verification.")
-        }
-      } else {
-        // Use multi-pill display
-        setMultiPillResults(results)
-        setShowMultiResults(true)
-        // Default to interactive view for multi-pill results
-        setViewMode("interactive")
-      }
-  } catch (err: unknown) {
+      // Always use multi-pill display, even for a single pill
+      setMultiPillResults(results)
+      setShowMultiResults(true)
+      setViewMode("interactive")
+    } catch (err: unknown) {
       console.error("Error analyzing pill:", err)
-  setError(isErrorWithMessage(err) && typeof err.message === 'string' ? err.message : "Failed to analyze pill image. Please try again or consult a pharmacist.")
+      setError(isErrorWithMessage(err) && typeof err.message === 'string' ? err.message : "Failed to analyze pill image. Please try again or consult a pharmacist.")
     } finally {
       setIsAnalyzing(false)
       setAnalysisStep("")
@@ -196,28 +202,51 @@ export default function PillIdentifier() {
                   <div className="space-y-4">
                     <Camera className="h-16 w-16 text-gray-400 mx-auto" />
                     <div>
-                      <p className="text-lg font-medium text-gray-900 dark:text-white">Upload pill image</p>
+                      <p className="text-lg font-medium text-gray-900 dark:text-white">Upload or take a pill image</p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         PNG, JPG up to 10MB • Single or multiple pills
                       </p>
                     </div>
                   </div>
                 )}
-                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" id="pill-upload" />
-                <label
-                  htmlFor="pill-upload"
-                  className="inline-block mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition-colors"
-                >
-                  {imagePreview ? "Change Image" : "Select Image"}
-                </label>
+                <div className="flex gap-2 w-full mt-4">
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" id="pill-upload" />
+                  <label
+                    htmlFor="pill-upload"
+                    className="flex-1 h-10 px-4 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-ring flex items-center justify-center cursor-pointer"
+                    aria-label={imagePreview ? "Change Image" : "Select Image"}
+                  >
+                    {imagePreview ? "Change Image" : "Select Image"}
+                  </label>
+                  <Dialog open={showWebcam} onOpenChange={setShowWebcam}>
+                    <DialogTrigger>
+                      <button
+                        type="button"
+                        aria-label="Take Photo"
+                        className="flex-1 h-10 px-4 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-ring flex items-center justify-center"
+                      >
+                        <Camera className="inline-block mr-2 h-5 w-5 align-text-bottom" />
+                        Take Photo
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogPrimitive.Title className="text-lg font-semibold mb-2">Take a Photo</DialogPrimitive.Title>
+                      <WebcamCapture
+                        onCapture={handleWebcamCapture}
+                        onClose={() => setShowWebcam(false)}
+                      />
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
 
               <Button
                 onClick={analyzePill}
-                disabled={!selectedImage || isAnalyzing}
+                disabled={(!selectedImage && !imagePreview) || isAnalyzing}
                 className="w-full bg-blue-600 text-white hover:bg-blue-700 border border-blue-700 rounded-lg"
                 size="lg"
               >
+  {/* Webcam modal now handled by Dialog */}
                 {isAnalyzing ? (
                   <>
                     <Clock className="h-4 w-4 mr-2 animate-spin" />
@@ -324,24 +353,24 @@ export default function PillIdentifier() {
                   return (
                     <Card key={pill.pillId} className="relative">
                       <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-3">
-                              <Badge variant="outline" className="text-lg px-3 py-1">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-0">
+                          <div className="space-y-2 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
+                              <Badge variant="outline" className="text-sm sm:text-lg px-2 sm:px-3 py-0.5 sm:py-1 max-w-full truncate">
                                 Pill #{pill.pillId}
                               </Badge>
                               {getStatusBadge(pill.status)}
-                              {bestMatch && <CardTitle className="text-xl">{bestMatch.name}</CardTitle>}
+                              {bestMatch && <CardTitle className="text-base sm:text-xl truncate max-w-[10rem] sm:max-w-xs">{bestMatch.name}</CardTitle>}
                             </div>
                             {bestMatch && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0 text-xs sm:text-sm">
+                                <span className="text-gray-600 dark:text-gray-400 break-words">
                                   Generic: {bestMatch.genericName}
                                 </span>
                                 {bestMatch.brandName && (
                                   <>
                                     <span className="text-gray-400">•</span>
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                                    <span className="text-gray-600 dark:text-gray-400 break-words">
                                       Brand: {bestMatch.brandName}
                                     </span>
                                   </>
@@ -349,13 +378,13 @@ export default function PillIdentifier() {
                               </div>
                             )}
                           </div>
-                          <div className="text-right">
-                            {bestMatch && (
-                              <>
-                                <div className="flex items-center gap-2 mb-1">
-                                  <div className={`w-3 h-3 rounded-full ${getConfidenceColor(bestMatch.confidence)}`} />
-                                  <span className="font-semibold text-lg">{bestMatch.confidence}%</span>
-                                </div>
+                          {bestMatch && (
+                            <div className="flex flex-col items-end min-w-0 mt-2 sm:mt-0">
+                              <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+                                <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full ${getConfidenceColor(bestMatch.confidence)}`} />
+                                <span className="font-semibold text-base sm:text-lg truncate">{bestMatch.confidence}%</span>
+                              </div>
+                              <div className="max-w-full">
                                 <Badge
                                   variant={
                                     bestMatch.confidence >= 90
@@ -364,12 +393,13 @@ export default function PillIdentifier() {
                                         ? "secondary"
                                         : "destructive"
                                   }
+                                  className="text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1 max-w-full truncate"
                                 >
                                   {getConfidenceText(bestMatch.confidence)} Confidence
                                 </Badge>
-                              </>
-                            )}
-                          </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </CardHeader>
                       <CardContent>
