@@ -1,6 +1,6 @@
 
 
-import React, { useRef, useState } from "react"
+import React, { useRef } from "react"
 import { CloseX } from "@/components/close-x"
 
 interface WebcamCaptureProps {

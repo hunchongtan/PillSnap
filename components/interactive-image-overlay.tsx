@@ -94,7 +94,7 @@ export function InteractiveImageOverlay({
         className="relative w-full h-[600px] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg"
       >
         <Image
-          ref={imageRef as any}
+          ref={imageRef as React.RefObject<HTMLImageElement>}
           src={imageUrl}
           alt="Pill analysis"
           onLoad={handleImageLoad}
