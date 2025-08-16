@@ -16,19 +16,6 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 const WebcamCapture = dynamic(() => import("@/components/webcam-capture"), { ssr: false })
 import { InteractiveImageOverlay } from "@/components/interactive-image-overlay"
 
-interface PillMatch {
-  id: string
-  name: string
-  genericName: string
-  brandName?: string
-  confidence: number
-  imprint: string
-  shape: string
-  color: string
-  size: string
-  scoring?: string
-  description: string
-}
 
 export default function PillIdentifier() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
@@ -43,7 +30,6 @@ export default function PillIdentifier() {
   }
   // Single pill results (legacy)
   // const [results, setResults] = useState<PillMatch[]>([])
-  const [showResults, setShowResults] = useState(false)
 
   // Multi-pill results (new)
   const [multiPillResults, setMultiPillResults] = useState<MultiPillResults | null>(null)
@@ -64,7 +50,6 @@ export default function PillIdentifier() {
         setImagePreview(e.target?.result as string)
       }
       reader.readAsDataURL(file)
-      setShowResults(false)
       setShowMultiResults(false)
       setError(null)
     }
@@ -88,7 +73,6 @@ export default function PillIdentifier() {
     setImagePreview(dataUrl)
     setSelectedImage(file)
     setShowWebcam(false)
-    setShowResults(false)
     setShowMultiResults(false)
     setError(null)
   }
@@ -97,7 +81,6 @@ export default function PillIdentifier() {
     if (!selectedImage) return
 
     setIsAnalyzing(true)
-    setShowResults(false)
     setShowMultiResults(false)
     setError(null)
     setAnalysisStep("Detecting pills in image...")
