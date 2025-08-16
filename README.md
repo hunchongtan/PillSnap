@@ -1,34 +1,37 @@
-# Pill Snap
 
-## Describe your idea
+# PillSnap
 
-Use Vision GPT to allow ER physicians and triage nurses to upload photos of loose or unknown pills. The system returns the top three likely medications with confidence scores, drastically reducing the time needed for pill identification and improving treatment speed.
+**PillSnap** is an AI-powered web app for identifying pills from images. It uses computer vision to detect and crop pills, then leverages OpenAI's **gpt-4.1-mini** for identification, returning the most likely matches with confidence scores.
 
-## Why is it aligned to the theme: addressing burnout and improving care of healthcare professionals?
+## Features
 
-- Reduces cognitive load and manual research during high-pressure triage situations.
-- Accelerates intake workflows, freeing up time for more critical clinical decisions.
-- Minimizes frustration and delays, lowering stress for emergency care staff.
+- Upload an image with one or more pills.
+- Automatic detection and cropping of each pill (Roboflow + Sharp).
+- AI-powered identification of each pill (OpenAI gpt-4.1-mini).
+- Displays confidence, generic/brand names, and bounding box details.
+- Modern, responsive UI (Next.js, Tailwind, shadcn/ui).
 
-## Implementation Feasibility & Scalability
+## Usage
 
-- Feasible using pre-trained vision models and pill databases.
-- Can be rolled out via a lightweight web tool for pilot testing and later integrated into EHR systems.
+1. Clone the repo and install dependencies:
+	```bash
+	npm install
+	```
+2. Set up your `.env` file with required API keys (see `.env.example`).
+3. Start the dev server:
+	```bash
+	npm run dev
+	```
+4. Visit [http://localhost:3000](http://localhost:3000).
 
-## Tech Involved
+## Architecture
 
-- Vision GPT or other multimodal AI models
-- Pill imprint and shape recognition algorithms
-- Web-based frontend for image upload and result display
-- Optional EHR and pharmacy system integration
+- **Detection:** Roboflow API for bounding boxes.
+- **Cropping:** Server-side with Sharp.
+- **Identification:** OpenAI gpt-4.1-mini (Vision).
+- **Frontend:** Next.js App Router, React, Tailwind, shadcn/ui.
 
-## Innovation (Fresh Idea or Twist on Existing Solutions)
+## Deployment
 
-- Brings cutting-edge multimodal AI into ER workflows in a highly practical use case.
-- Simplifies a previously slow and manual process using an intuitive, demo-ready interface.
-
-## Supporting Evidence & Data
-
-- Pill identification can take 30–90 minutes manually, especially without packaging (source: NIH).
-- Delays in medication verification are linked to increased ER wait times and error rates (source: AHRQ).
-- AI-powered visual recognition has shown high accuracy (>90%) in identifying common pill types (source: Nature Digital Medicine, 2022).
+- Production build: `npm run build`
+- All type and lint errors are resolved except for non-blocking `<img>` warnings (see Next.js docs for optimization).
