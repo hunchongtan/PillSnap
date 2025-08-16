@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     console.log("Sending request to OpenAI via AI SDK...");
 
     const result = await generateObject({
-      model: openai("gpt-4.1-mini"),
+      model: openai("gpt-4o-mini"),
       schema: PillIdentificationSchema,
       messages: [
         {
@@ -86,51 +86,53 @@ export async function POST(request: NextRequest) {
           content: [
             {
               type: "text",
-              text:
-              `You are a pharmaceutical image analysis expert assisting in a computer vision task. Your job is to analyze the provided image of a pill with the highest possible precision. Follow this exact protocol:
+              text: `You are a pharmaceutical image analysis expert working on a controlled identification system. Your role is to analyze the following pill image with strict attention to factual accuracy. You must avoid speculation or inference beyond what is visibly present in the image.
 
-              --- 
-              🔍 VISUAL CHARACTERISTICS (in order of priority):
-              - **Shape**: Identify using standard categories (round, oval, oblong, capsule, square, triangular, etc.)
-              - **Color**: Describe with specificity (e.g., "light blue", "white with red speckles", etc.)
-              - **Size**: Estimate size in millimeters if possible
-              - **Imprint**: Extract all visible text, numbers, symbols, or logos (even partial or unclear ones)
-              - **Scoring**: Note any scoring lines (single, double, cross-score)
-              - **Surface**: Describe texture (smooth, coated, glossy, matte, etc.)
-              - **Special Features**: Note enteric coating, extended-release indicators, unusual markings, etc.
+              🔎 STEP 1: VISUAL EXTRACTION (Do not infer or guess)
+              - Extract only what is visually and clearly present. If any visual feature is obscured, damaged, or unclear, explicitly say: "Not clearly visible."
+              - Characteristics to extract (in this order):
+                - **Shape**: Choose from standard forms (e.g., round, oval, capsule, oblong, square, triangular, etc.)
+                - **Color**: Use highly specific descriptors (e.g., "light yellow", "white with blue speckles")
+                - **Size**: Estimate in millimeters only if a reference is available — otherwise state: "Size not reliably estimable"
+                - **Imprint/Markings**: Extract all visible text, numbers, logos, or symbols. If any are missing or unclear, report exactly that.
+                - **Scoring**: Note any division or break lines (e.g., single score, cross-score, none)
+                - **Surface**: Describe texture (e.g., smooth, glossy, matte)
+                - **Special Features**: Note coatings or design features **only if clearly visible**
 
-              ---
-              🧬 DATABASE MATCHING:
-              Use all visual characteristics to find matches in authoritative pharmaceutical databases:
+              🧬 STEP 2: DATABASE MATCHING (Grounded identification only)
+              Use the extracted data to search structured, reliable sources:
               - FDA Orange Book
-              - NDC Code Database
-              - Imprint databases (Drugs.com, RxList)
+              - NDC database
+              - Drugs.com imprint index
+              - RxList database
 
-              Emphasize **exact imprint matches**. If imprint is partial or unclear, still return best-effort match.
+              You must:
+              - Prioritize **exact imprint matches**
+              - Never infer missing imprint content
+              - Only include matches if all key visual characteristics align
 
-              ---
-              📊 CONFIDENCE SCORING (0–100%):
-              Use this guide:
-              - 90–100%: Full imprint + shape + color match
-              - 80–89%: Strong imprint + minor feature mismatch
-              - 70–79%: Partial imprint + strong visual match
-              - 60–69%: No imprint, but strong visual resemblance
-              - Below 60%: Very low confidence or unknown pill
+              📉 STEP 3: CONFIDENCE SCORING (Use conservative judgment)
+              Score each match (0–100%) using this strict rubric:
+              - **90–100%**: Exact imprint + color + shape match
+              - **80–89%**: Strong imprint + minor deviation in non-critical features
+              - **70–79%**: Partial imprint + high visual similarity
+              - **60–69%**: No imprint, but features match common pills
+              - **Below 60%**: Identification uncertain or unreliable
 
-              ---
-              ⚠️ SAFETY & LIMITATIONS:
-              - Never assume imprint content—only report what's clearly visible.
-              - If imprint is unclear, explicitly mention that.
-              - If the image contains multiple pills, focus on the **most prominent** one.
-              - Explain your rationale for each identification.
-              - Warn if the pill resembles a controlled substance or has look-alikes.
-              - Recommend verification for low-confidence results.
+              🛑 STEP 4: UNCERTAINTY & SAFETY RULES (Avoid hallucination)
+              - If imprint is unclear, say so. Do not fill in or assume missing text.
+              - Do not speculate about drug name, class, or use without a confident database match.
+              - Never "invent" imprint codes, brands, or descriptions.
+              - If visual data is insufficient, mark the result as low-confidence (e.g., 0–1%) and clearly say: "No reliable match found."
+              - For low-confidence results, include reasoning and recommend human/pharmacist review.
 
-              ---
-              🎯 OUTPUT FORMAT:
-              Return **exactly 3 results** ranked by confidence:
-              - Always return 3 entries, even if confidence is very low.
-              - For uncertain identifications, include placeholders with minimal confidence and explain the ambiguity in the description.
+              📦 STEP 5: OUTPUT FORMAT
+              Return exactly 3 results, ranked by confidence.
+              - If fewer than 3 valid matches are found, return placeholder entries with:
+                - name: "Unknown"
+                - confidence: 0 or 1
+                - description: "No confident match found. Visual data insufficient."
+                - Explain what features were missing or unclear.
               `,
             },
             {

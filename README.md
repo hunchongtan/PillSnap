@@ -1,13 +1,13 @@
 
 # PillSnap
 
-**PillSnap** is an AI-powered web app for identifying pills from images. It uses computer vision to detect and crop pills, then leverages OpenAI's **gpt-4.1-mini** for identification, returning the most likely matches with confidence scores.
+**PillSnap** is an AI-powered web app for identifying pills from images. It uses computer vision to detect and crop pills, then leverages OpenAI's **gpt-4o-mini** for identification, returning the most likely matches with confidence scores.
 
 ## Features
 
 - Upload an image with one or more pills.
 - Automatic detection and cropping of each pill (Roboflow + Sharp).
-- AI-powered identification of each pill (OpenAI gpt-4.1-mini).
+- AI-powered identification of each pill (OpenAI gpt-4o-mini).
 - Displays confidence, generic/brand names, and bounding box details.
 - Modern, responsive UI (Next.js, Tailwind, shadcn/ui).
 
@@ -28,7 +28,7 @@
 
 - **Detection:** Roboflow API for bounding boxes.
 - **Cropping:** Server-side with Sharp.
-- **Identification:** OpenAI gpt-4.1-mini (Vision).
+- **Identification:** OpenAI gpt-4o-mini (Vision).
 - **Frontend:** Next.js App Router, React, Tailwind, shadcn/ui.
 
 ## Deployment
