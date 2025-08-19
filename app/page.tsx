@@ -25,6 +25,7 @@ export default function PillIdentifier() {
   const [showWebcam, setShowWebcam] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisStep, setAnalysisStep] = useState<string>("")
+  const [medicalInfo, setMedicalInfo] = useState<string>("")
 
   // Type guard for error objects
   function isErrorWithMessage(err: unknown): err is { message?: string } {
@@ -88,7 +89,7 @@ export default function PillIdentifier() {
     setAnalysisStep("Detecting pills in image...")
 
     try {
-      const results = await classifier.processImage(selectedImage)
+      const results = await classifier.processImage(selectedImage, medicalInfo)
 
       if (!results.success || results.pillCount === 0) {
         setError("No pills detected in the image. Please ensure the image is clear and contains visible pills.")
@@ -163,6 +164,15 @@ export default function PillIdentifier() {
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             AI-powered medication identification
           </p>
+          <div className="max-w-2xl mx-auto mt-4 text-left">
+            <Alert variant="default" className="text-left">
+              <AlertDescription className="text-left">
+                <strong className="text-left">Note:</strong> This application is a Proof of Concept and is not intended for clinical use. The Pill Identifier may produce inaccurate or incomplete results, as it relies on a GPT-based knowledge base that has not undergone medical validation.<br />
+                Future improvements include model training and Singapore-specific validation through MIMS integration.<br />
+                Always consult a licensed healthcare professional before making any medical decisions.
+              </AlertDescription>
+            </Alert>
+          </div>
         </div>
 
         {/* Upload Section */}
@@ -213,7 +223,7 @@ export default function PillIdentifier() {
                       <button
                         type="button"
                         aria-label="Take Photo"
-                        className="flex-1 h-10 px-4 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-ring flex items-center justify-center"
+                        className="flex-1 h-10 px-4 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-ring flex items-center justify-center cursor-pointer"
                       >
                         <Camera className="inline-block mr-2 h-5 w-5 align-text-bottom" />
                         Take Photo
@@ -230,13 +240,27 @@ export default function PillIdentifier() {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <label htmlFor="medical-info" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Medical Information (optional)
+                </label>
+                <textarea
+                  id="medical-info"
+                  className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white p-3"
+                  rows={3}
+                  placeholder="e.g. Patient symptoms, diagnosis, allergies, or other relevant context"
+                  value={medicalInfo}
+                  onChange={e => setMedicalInfo(e.target.value)}
+                  disabled={isAnalyzing}
+                />
+              </div>
               <Button
                 onClick={analyzePill}
                 disabled={(!selectedImage && !imagePreview) || isAnalyzing}
-                className="w-full bg-blue-600 text-white hover:bg-blue-700 border border-blue-700 rounded-lg"
+                className="w-full bg-blue-600 text-white hover:bg-blue-700 border border-blue-700 rounded-lg cursor-pointer"
                 size="lg"
               >
-  {/* Webcam modal now handled by Dialog */}
+                {/* Webcam modal now handled by Dialog */}
                 {isAnalyzing ? (
                   <>
                     <Clock className="h-4 w-4 mr-2 animate-spin" />
@@ -274,7 +298,9 @@ export default function PillIdentifier() {
                       <Grid className="h-5 w-5" />
                       Detection Summary
                     </CardTitle>
-                    <CardDescription>{MultiPillUtils.generateSummary(multiPillResults)}</CardDescription>
+                    <CardDescription className="mt-2">
+                      {MultiPillUtils.generateSummary(multiPillResults)}
+                    </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button

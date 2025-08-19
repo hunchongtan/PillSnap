@@ -224,10 +224,6 @@ export function PillDetailPanel({ pill }: PillDetailPanelProps) {
                     <div>
                       <h5 className="font-medium mb-2">Medication Information</h5>
                       <p className="text-sm text-gray-700 dark:text-gray-300 break-words">{match.description}</p>
-                      <div className="flex items-center gap-2 text-sm mt-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span className="text-gray-600">FDA database match</span>
-                      </div>
                     </div>
                   </div>
                 </div>
