@@ -14,6 +14,7 @@ import { CloseX } from "@/components/close-x"
 import dynamic from "next/dynamic"
 import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
+import Step1Form from "@/components/step1-form"
 
 const WebcamCapture = dynamic(() => import("@/components/webcam-capture"), { ssr: false })
 import { InteractiveImageOverlay } from "@/components/interactive-image-overlay"
@@ -26,6 +27,7 @@ export default function PillIdentifier() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisStep, setAnalysisStep] = useState<string>("")
   const [medicalInfo, setMedicalInfo] = useState<string>("")
+  const [searchResults, setSearchResults] = useState(null)
 
   // Type guard for error objects
   function isErrorWithMessage(err: unknown): err is { message?: string } {
@@ -143,6 +145,10 @@ export default function PillIdentifier() {
     return multiPillResults.pillResults.find((p) => p.pillId === selectedPillId) || null
   }
 
+  const handleSearchResults = (results: any) => {
+    setSearchResults(results);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
@@ -159,21 +165,34 @@ export default function PillIdentifier() {
                 priority
               />
             </div>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">PillSnap</h1>
+            <h1 className="text-3xl font-bold">PillSnap</h1>
           </div>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+          <p className="text-gray-600 dark:text-gray-400">
             AI-powered medication identification
           </p>
-          <div className="max-w-2xl mx-auto mt-4 text-left">
-            <Alert variant="default" className="text-left">
-              <AlertDescription className="text-left">
-                <strong className="text-left">Note:</strong> This application is a Proof of Concept and is not intended for clinical use. The Pill Identifier may produce inaccurate or incomplete results, as it relies on a GPT-based knowledge base that has not undergone medical validation.<br />
-                Future improvements include model training and Singapore-specific validation through MIMS integration.<br />
-                Always consult a licensed healthcare professional before making any medical decisions.
-              </AlertDescription>
-            </Alert>
-          </div>
         </div>
+
+        {/* Step1Form Integration */}
+        <Step1Form onResults={handleSearchResults} />
+
+        {/* Display Search Results */}
+        {searchResults && (
+          <div className="mt-8">
+            <h2 className="text-xl font-bold mb-4">Search Results</h2>
+            <ul>
+              {searchResults.map((result: any, index: number) => (
+                <li key={index} className="mb-2">
+                  <div className="p-4 border rounded-md shadow-sm">
+                    <p><strong>Imprint:</strong> {result.imprint}</p>
+                    <p><strong>Shape:</strong> {result.shape}</p>
+                    <p><strong>Color:</strong> {result.color}</p>
+                    <p><strong>Match Percentage:</strong> {result.matchPercentage}%</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Upload Section */}
         <Card className="max-w-2xl mx-auto mb-8">

@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Pill {
+  id             Int      @id @default(autoincrement())
+  generic_name   String?
+  brand_name     String?
+  strength       String?
+  dosage_form    String?
+  imprint_raw    String?
+  imprint_norm   String?
+  shape          String?
+  color          String?
+  scored         Boolean?
+  image_url      String?
+  image_url_back String?
+  manufacturer   String?
+  status         Status   @default(PENDING_REVIEW)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@index([imprint_norm])
+  @@index([shape, color, scored])
+}
+
+enum Status {
+  PUBLISHED
+  PENDING_REVIEW
+}
