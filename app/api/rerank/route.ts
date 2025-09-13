@@ -1,17 +1,19 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { z } from "zod"
+import { type NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
-export const runtime = "nodejs"
+export const runtime = 'nodejs'
 
-const PillSchema = z.object({
-  id: z.any().optional(),
-  brand_name: z.string().optional(),
-  generic_name: z.string().optional(),
-  manufacturer: z.string().optional(),
-  strength: z.string().optional(),
-  imprint_similarity: z.number().optional(),
-  match_percentage: z.number().optional(),
-}).passthrough()
+const PillSchema = z
+  .object({
+    id: z.any().optional(),
+    brand_name: z.string().optional(),
+    generic_name: z.string().optional(),
+    manufacturer: z.string().optional(),
+    strength: z.string().optional(),
+    imprint_similarity: z.number().optional(),
+    match_percentage: z.number().optional(),
+  })
+  .passthrough()
 
 const BodySchema = z.object({
   results: z.array(PillSchema),
@@ -29,7 +31,7 @@ export async function POST(request: NextRequest) {
   try {
     const input = BodySchema.safeParse(await request.json())
     if (!input.success) {
-      return NextResponse.json({ error: "Invalid rerank request" }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid rerank request' }, { status: 400 })
     }
     const { results, secondaryAttributes, sessionId } = input.data
 
@@ -91,7 +93,7 @@ export async function POST(request: NextRequest) {
       reranked: true,
     })
   } catch (error) {
-    console.error("[rerank] API error")
-    return NextResponse.json({ error: "Internal server error during reranking" }, { status: 500 })
+    console.error('[rerank] API error')
+    return NextResponse.json({ error: 'Internal server error during reranking' }, { status: 500 })
   }
 }

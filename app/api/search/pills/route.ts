@@ -1,9 +1,8 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { z } from "zod"
-import { searchPills, saveUserSearch } from "@/lib/database"
-import type { ExtractedPillAttributes } from "@/lib/openai-vision"
+import { saveUserSearch, searchPills } from '@/lib/database'
+import { type NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
-export const runtime = "nodejs"
+export const runtime = 'nodejs'
 
 const AttributesSchema = z.object({
   shape: z.string().optional(),
@@ -22,7 +21,7 @@ export async function POST(request: NextRequest) {
   try {
     const parsed = BodySchema.safeParse(await request.json())
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid search payload" }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid search payload' }, { status: 400 })
     }
     const { attributes, sessionId } = parsed.data
 
@@ -52,7 +51,7 @@ export async function POST(request: NextRequest) {
       matched_pill_ids: searchResults.map((pill) => pill.id),
       confidence_score: confidenceScore,
       session_id: sessionId || generateSessionId(),
-      user_agent: request.headers.get("user-agent") || undefined,
+      user_agent: request.headers.get('user-agent') || undefined,
     })
 
     return NextResponse.json({
@@ -62,8 +61,8 @@ export async function POST(request: NextRequest) {
       totalResults: searchResults.length,
     })
   } catch (error) {
-    console.error("[search/pills] API error")
-    return NextResponse.json({ error: "Internal server error during pill search" }, { status: 500 })
+    console.error('[search/pills] API error')
+    return NextResponse.json({ error: 'Internal server error during pill search' }, { status: 500 })
   }
 }
 
