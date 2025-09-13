@@ -1,6 +1,12 @@
-// /app/api/pill/route.ts
+import { type NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
+import { z } from "zod";
 
-// 1) Safer error guard
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Error guard
 function isErrorWithProps(
   error: unknown
 ): error is {
@@ -12,28 +18,17 @@ function isErrorWithProps(
   return typeof error === "object" && error !== null;
 }
 
-import { openai } from "@ai-sdk/openai";
-import { generateObject } from "ai";
-import { type NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-
-export const runtime = "nodejs";
-
-// 2) Output schema — EXACTLY 3 results, no extra keys
+// Schema validation
 const PillResultSchema = z
   .object({
-    name: z.string().min(1),
-    genericName: z.string().min(1),
-    brandName: z.string().min(1),
-    confidence: z.number().min(0).max(100),
-    imprint: z.string().default("unclear"),
     shape: z.string().default("unclear"),
     color: z.string().default("unclear"),
-    size: z.string().default("unclear"),
+    size_mm: z.number().min(0).default(0),
+    thickness_mm: z.number().min(0).default(0),
+    front_imprint: z.string().default("unclear"),
+    back_imprint: z.string().default("unclear"),
+    coating: z.string().default("unclear"),
     scoring: z.string().default("unclear"),
-    // Keep the same field name for compatibility, but we’ll ask the model
-    // to use this as “reasoning for match” rather than a marketing blurb.
-    description: z.string().min(1),
   })
   .strict();
 
@@ -43,7 +38,7 @@ const PillIdentificationSchema = z
   })
   .strict();
 
-// 3) Helper prompt builder
+// Prompt builder
 function buildPrompt(medicalInfo?: string | null) {
   const context =
     medicalInfo && medicalInfo.trim() !== ""
@@ -101,9 +96,6 @@ export async function POST(request: NextRequest) {
     const file = formData.get("image") as File;
     const medicalInfo = formData.get("medicalInfo") as string | null;
 
-  // Build and log the prompt
-  const promptText = buildPrompt(medicalInfo);
-
     if (!file) {
       return NextResponse.json({ error: "No image provided" }, { status: 400 });
     }
@@ -124,30 +116,32 @@ export async function POST(request: NextRequest) {
     const base64 = Buffer.from(bytes).toString("base64");
     const dataUrl = `data:${file.type};base64,${base64}`;
 
-    // 4) Call model with system guardrails + user content
-    const result = await generateObject({
-      model: openai("gpt-4o-mini"),
-      schema: PillIdentificationSchema,
+    const promptText = buildPrompt(medicalInfo);
+
+    const result = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "user",
-          content: [
-            {
-              type: "text",
-              text: promptText,
-            },
-            {
-              type: "image",
-              image: dataUrl,
-            },
-          ],
+          content: `${promptText}\n\nImage Data: ${dataUrl}`,
         },
       ],
-      temperature: 0.2, // Lowered temperature for more consistent medical identification
+      temperature: 0.2,
     });
 
-    // 5) Always return schema-validated object
-    return NextResponse.json(result.object);
+    const rawResponse = result.choices[0]?.message?.content || "";
+
+    let attributes;
+    try {
+      const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
+      const jsonString = jsonMatch ? jsonMatch[0] : rawResponse;
+      attributes = PillIdentificationSchema.parse(JSON.parse(jsonString));
+    } catch (parseError) {
+      console.error("Failed to parse OpenAI response as JSON:", parseError);
+      return NextResponse.json({ error: "Failed to parse AI analysis results" }, { status: 500 });
+    }
+
+    return NextResponse.json(attributes);
   } catch (error: unknown) {
     console.error("Error analyzing pill:", error);
     console.error("Error details:", {
@@ -169,7 +163,6 @@ export async function POST(request: NextRequest) {
           : undefined,
     });
 
-    // Common failure buckets
     if (
       (isErrorWithProps(error) &&
         typeof error.message === "string" &&
@@ -225,7 +218,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fallback
     return NextResponse.json(
       {
         error: `Failed to analyze pill image: ${
