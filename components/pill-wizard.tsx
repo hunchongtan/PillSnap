@@ -17,7 +17,7 @@ interface PillWizardProps {
 
 export function PillWizard({ onComplete }: PillWizardProps) {
   const [isSearching, setIsSearching] = useState(false)
-  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
+  const [sessionId] = useState(() => `session_${new Date().toISOString()}_${Math.random().toString(36).substr(2, 9)}`)
   const [pillImages, setPillImages] = useState<string[]>([])
 
   const handleAttributesComplete = async (pillAttributes: ExtractedPillAttributes) => {

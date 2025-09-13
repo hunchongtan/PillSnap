@@ -7,15 +7,15 @@ import { Suspense } from "react"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "PillSnap - AI-Powered Pill Identification",
-  description:
-    "Identify pills instantly with AI-powered image recognition. Upload a photo and get detailed medication information.",
+  title: "PillSnap",
+  description: "Pill identifier and search.",
+  icons: { icon: "/icon.svg" },
   generator: "v0.app",
-  keywords: ["pill identification", "medication", "AI", "computer vision", "healthcare", "pharmacy"],
+  keywords: ["pill identification", "medication", "healthcare", "pharmacy"],
   authors: [{ name: "PillSnap Team" }],
   openGraph: {
-    title: "PillSnap - AI-Powered Pill Identification",
-    description: "Identify pills instantly with AI-powered image recognition",
+    title: "PillSnap",
+    description: "Pill identifier and search.",
     type: "website",
   },
 }
@@ -27,6 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <title>PillSnap</title>
+      </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <Suspense fallback={null}>{children}</Suspense>
         <Analytics />

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle, X } from "lucide-react"
 
 export default async function AdminPage() {
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
 
   const { data: pendingPills, error } = await supabase
     .from("pills")

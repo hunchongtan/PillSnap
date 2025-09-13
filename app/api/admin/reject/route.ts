@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Pill ID is required" }, { status: 400 })
     }
 
-    const supabase = createServerClient()
+  const supabase = await createServerClient()
 
     // Delete the pill record and associated images
     const { data: pill, error: fetchError } = await supabase

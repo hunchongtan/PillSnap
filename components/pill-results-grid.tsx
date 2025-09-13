@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Eye, Grid3X3, List } from "lucide-react"
 import Link from "next/link"
+import clsx from "clsx"
 
 interface PillResult {
   id: string
@@ -28,11 +29,21 @@ interface PillResultsGridProps {
 export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
 
+  const computeAverageConfidence = useMemo(() => {
+    return (rs: Array<{ confidence?: number }>) => {
+      const vals = rs.map(r => r.confidence).filter((v): v is number => typeof v === 'number' && isFinite(v))
+      if (!vals.length) return null
+      return (vals.reduce((a,b)=>a+b,0) / vals.length) * 100
+    }
+  }, [])
+
+  const avgConf = useMemo(() => computeAverageConfidence(results || []), [computeAverageConfidence, results])
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {[...Array(6)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
+          <Card key={i} className="animate-pulse rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
             <CardContent className="p-4">
               <div className="w-full h-32 bg-muted rounded-lg mb-4"></div>
               <div className="h-4 bg-muted rounded mb-2"></div>
@@ -46,7 +57,7 @@ export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
 
   if (!results || results.length === 0) {
     return (
-      <Card className="text-center py-12">
+      <Card className="rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 text-center py-12">
         <CardContent>
           <p className="text-muted-foreground">No pills found matching your criteria.</p>
           <p className="text-sm text-muted-foreground mt-2">Try adjusting your search parameters.</p>
@@ -56,11 +67,18 @@ export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Found {results.length} result{results.length !== 1 ? "s" : ""}
-        </p>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+            Found {results.length} result{results.length === 1 ? '' : 's'}
+          </div>
+          {avgConf !== null && (
+            <div className="text-sm text-neutral-500 dark:text-neutral-400">
+              {`Average confidence ${avgConf.toFixed(avgConf >= 99 ? 0 : 1)}%`}
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <Button variant={viewMode === "grid" ? "default" : "outline"} size="sm" onClick={() => setViewMode("grid")}>
             <Grid3X3 className="w-4 h-4" />
@@ -74,23 +92,7 @@ export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
       {viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {results.map((pill) => (
-            <Card key={pill.id} className="hover:shadow-md transition-shadow relative">
-              {pill.confidence && (
-                <div className="absolute top-3 right-3 z-10">
-                  <Badge
-                    className={`text-xs font-semibold ${
-                      pill.confidence >= 0.8
-                        ? "bg-green-500 hover:bg-green-600"
-                        : pill.confidence >= 0.6
-                          ? "bg-yellow-500 hover:bg-yellow-600"
-                          : "bg-red-500 hover:bg-red-600"
-                    } text-white`}
-                  >
-                    {Math.round(pill.confidence * 100)}% Match
-                  </Badge>
-                </div>
-              )}
-
+            <Card key={pill.id} className="hover:shadow-md transition-shadow relative rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
               <CardContent className="p-4">
                 {/* Pill Image */}
                 <div className="w-full h-32 bg-muted rounded-lg mb-4 flex items-center justify-center overflow-hidden">
@@ -107,11 +109,25 @@ export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
 
                 {/* Pill Info */}
                 <div className="space-y-2">
-                  <div>
-                    <h3 className="font-semibold text-foreground">
-                      {pill.brand_name || pill.generic_name || "Unknown"}
-                    </h3>
-                    {pill.strength && <p className="text-sm text-muted-foreground">{pill.strength}</p>}
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
+                        {pill.brand_name || pill.generic_name || "Unknown"}
+                      </h3>
+                      {pill.strength && <p className="text-sm text-muted-foreground">{pill.strength}</p>}
+                    </div>
+                    {typeof pill.confidence === 'number' && (
+                      (() => {
+                        const conf = pill.confidence * 100
+                        const badgeClasses = clsx(
+                          "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium",
+                          conf >= 80 ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:ring-emerald-800/60"
+                            : conf >= 60 ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:ring-amber-800/60"
+                            : "bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:ring-neutral-700"
+                        )
+                        return <span className={badgeClasses}>{conf.toFixed(conf >= 99 ? 0 : 1)}%</span>
+                      })()
+                    )}
                   </div>
 
                   <div className="flex flex-wrap gap-1">
@@ -148,7 +164,7 @@ export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
       ) : (
         <div className="space-y-3">
           {results.map((pill) => (
-            <Card key={pill.id} className="hover:shadow-md transition-shadow">
+            <Card key={pill.id} className="hover:shadow-md transition-shadow rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
               <CardContent className="p-4">
                 <div className="flex items-center gap-4 relative">
                   <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -166,7 +182,7 @@ export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0 pr-4">
-                        <h3 className="font-semibold text-foreground text-lg mb-1">
+                        <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
                           {pill.brand_name || pill.generic_name || "Unknown"}
                         </h3>
                         {pill.generic_name && pill.brand_name && (
@@ -196,19 +212,16 @@ export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
                       </div>
 
                       <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                        {pill.confidence && (
-                          <Badge
-                            className={`text-xs font-semibold ${
-                              pill.confidence >= 0.8
-                                ? "bg-green-500 hover:bg-green-600"
-                                : pill.confidence >= 0.6
-                                  ? "bg-yellow-500 hover:bg-yellow-600"
-                                  : "bg-red-500 hover:bg-red-600"
-                            } text-white`}
-                          >
-                            {Math.round(pill.confidence * 100)}% Match
-                          </Badge>
-                        )}
+                        {typeof pill.confidence === 'number' && (() => {
+                          const conf = pill.confidence * 100
+                          const badgeClasses = clsx(
+                            "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium",
+                            conf >= 80 ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:ring-emerald-800/60"
+                              : conf >= 60 ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:ring-amber-800/60"
+                              : "bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:ring-neutral-700"
+                          )
+                          return <span className={badgeClasses}>{conf.toFixed(conf >= 99 ? 0 : 1)}%</span>
+                        })()}
                         <Link href={`/pill/${pill.id}`}>
                           <Button variant="outline" size="sm">
                             <Eye className="w-4 h-4 mr-2" />
@@ -225,14 +238,7 @@ export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
         </div>
       )}
 
-      <Card className="bg-amber-50 border-amber-200 mt-6">
-        <CardContent className="p-4">
-          <p className="text-sm text-amber-800 text-center">
-            <strong>Important:</strong> These results are for informational purposes only. Always verify pill
-            identification with a healthcare professional or pharmacist before taking any medication.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Disclaimer block removed - covered by global tooltip */}
     </div>
   )
 }

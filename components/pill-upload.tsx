@@ -35,7 +35,7 @@ export function PillUpload() {
   const [currentStep, setCurrentStep] = useState<string>("")
   const [isSearching, setIsSearching] = useState(false)
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null)
-  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
+  const [sessionId] = useState(() => `session_${new Date().toISOString()}_${Math.random().toString(36).substr(2, 9)}`)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -95,6 +95,9 @@ export function PillUpload() {
       setProgress(50)
 
       const visionAnalysis = await extractPillAttributes(uploadedFile.file)
+      if (!visionAnalysis || !visionAnalysis.attributes) {
+        throw new Error("Invalid vision analysis response")
+      }
       console.log("[handleAnalyze] Vision analysis result:", visionAnalysis)
       setVisionResult(visionAnalysis)
 
@@ -109,7 +112,10 @@ export function PillUpload() {
       })
     } catch (err) {
       setError("Failed to process image. Please try again.")
-      console.error("[handleAnalyze] Processing error:", err)
+      console.error("[handleAnalyze] Processing error:", {
+        message: err instanceof Error ? err.message : "Unknown error",
+        stack: err instanceof Error ? err.stack : "No stack trace",
+      })
     } finally {
       setIsProcessing(false)
       setCurrentStep("")

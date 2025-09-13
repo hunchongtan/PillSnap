@@ -177,15 +177,7 @@ export function PillSearchResults({ searchResult, isLoading = false, error }: Pi
         ))}
       </div>
 
-      {/* Medical Disclaimer */}
-      <Alert>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Important:</strong> This identification is for informational purposes only. Always verify with a
-          healthcare professional before taking any medication. Do not rely solely on visual identification for
-          medication safety.
-        </AlertDescription>
-      </Alert>
+      {/* Disclaimer removed - covered by global tooltip */}
     </div>
   )
 }

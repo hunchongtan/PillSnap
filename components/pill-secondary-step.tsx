@@ -9,15 +9,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Search } from "lucide-react"
 
+type SecondaryAttributes = {
+  suspected_name: string
+  manufacturer: string
+  strength: string
+  indication: string
+  country: string
+  notes: string
+}
+
 interface PillSecondaryStepProps {
-  onComplete: (attributes: any) => void
-  initialAttributes?: any
+  onComplete: (attributes: SecondaryAttributes) => void
+  initialAttributes?: Partial<SecondaryAttributes>
 }
 
 const COUNTRIES = ["SG", "US", "CA", "GB", "AU", "DE", "FR", "JP", "IN", "Other"]
 
 export function PillSecondaryStep({ onComplete, initialAttributes = {} }: PillSecondaryStepProps) {
-  const [attributes, setAttributes] = useState({
+  const [attributes, setAttributes] = useState<SecondaryAttributes>({
     suspected_name: "",
     manufacturer: "",
     strength: "",

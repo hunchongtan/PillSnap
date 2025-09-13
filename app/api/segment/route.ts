@@ -1,25 +1,31 @@
 import axios from "axios";
 import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { env } from "@/lib/env";
 
-// Roboflow API configuration
-const ROBOFLOW_API_KEY = process.env.ROBOFLOW_API_KEY;
-const ROBOFLOW_MODEL_URL = process.env.ROBOFLOW_MODEL_URL;
+export const runtime = "nodejs";
 
 function isErrorWithMessage(e: unknown): e is { message?: string } {
   return typeof e === "object" && e !== null && "message" in e;
 }
 
+const FormSchema = z.object({
+  // Either a file under key "file" or an imageUrl string
+  imageUrl: z.string().url().optional(),
+});
+
 export async function POST(request: NextRequest) {
   try {
-    console.log("[POST] Received request to Roboflow API");
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
-    const imageUrl = formData.get("imageUrl") as string | null;
-
-    console.log("[POST] Form data extracted", { file, imageUrl });
+    const imageUrlRaw = formData.get("imageUrl") as string | null;
+    const parsed = FormSchema.safeParse({ imageUrl: imageUrlRaw ?? undefined });
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    }
+    const imageUrl = parsed.data.imageUrl ?? null;
 
     if (!file && !imageUrl) {
-      console.error("[POST] Validation error: Provide file or imageUrl");
       return NextResponse.json(
         { error: "Provide file or imageUrl" },
         { status: 400 }
@@ -31,29 +37,21 @@ export async function POST(request: NextRequest) {
       const buffer = Buffer.from(await file.arrayBuffer());
       const base64 = buffer.toString("base64");
       payload = `data:${file.type};base64,${base64}`;
-      console.log("[POST] File converted to base64 payload");
     }
-
-    console.log("[POST] Sending request to Roboflow API", {
-      url: `${ROBOFLOW_MODEL_URL}?api_key=${ROBOFLOW_API_KEY}`,
-      params: imageUrl ? { image: imageUrl } : {},
-      payload,
-    });
 
     const response = await axios({
       method: "POST",
-      url: `${ROBOFLOW_MODEL_URL}?api_key=${ROBOFLOW_API_KEY}`,
+      url: `${env.ROBOFLOW_MODEL_URL}?api_key=${env.ROBOFLOW_API_KEY}`,
       params: imageUrl ? { image: imageUrl } : {},
       data: payload,
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
+      timeout: 15000,
     });
-
-    console.log("[POST] Roboflow API response", response.data);
     return NextResponse.json(response.data, { status: 200 });
   } catch (e: unknown) {
-    console.error("[POST] Error occurred while processing request", e);
+    console.error("[segment] Error occurred while processing request");
     return NextResponse.json(
       {
         error:

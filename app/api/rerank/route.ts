@@ -1,14 +1,37 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
+
+export const runtime = "nodejs"
+
+const PillSchema = z.object({
+  id: z.any().optional(),
+  brand_name: z.string().optional(),
+  generic_name: z.string().optional(),
+  manufacturer: z.string().optional(),
+  strength: z.string().optional(),
+  imprint_similarity: z.number().optional(),
+  match_percentage: z.number().optional(),
+}).passthrough()
+
+const BodySchema = z.object({
+  results: z.array(PillSchema),
+  secondaryAttributes: z
+    .object({
+      suspected_name: z.string().optional(),
+      manufacturer: z.string().optional(),
+      strength: z.string().optional(),
+    })
+    .default({}),
+  sessionId: z.string().optional(),
+})
 
 export async function POST(request: NextRequest) {
   try {
-    const { results, secondaryAttributes, sessionId } = await request.json()
-
-    if (!results || !Array.isArray(results)) {
-      return NextResponse.json({ error: "No results provided for reranking" }, { status: 400 })
+    const input = BodySchema.safeParse(await request.json())
+    if (!input.success) {
+      return NextResponse.json({ error: "Invalid rerank request" }, { status: 400 })
     }
-
-    console.log("[v0] Reranking results with secondary attributes:", secondaryAttributes)
+    const { results, secondaryAttributes, sessionId } = input.data
 
     const rerankedResults = results.map((pill: any) => {
       let boostScore = 0
@@ -60,12 +83,6 @@ export async function POST(request: NextRequest) {
       return (b.imprint_similarity || 0) - (a.imprint_similarity || 0)
     })
 
-    console.log("[v0] Reranking complete:", {
-      originalCount: results.length,
-      rerankedCount: rerankedResults.length,
-      boostedItems: rerankedResults.filter((r) => r.boost_applied).length,
-    })
-
     return NextResponse.json({
       results: rerankedResults,
       confidence: Math.max(...rerankedResults.map((r) => r.match_percentage)),
@@ -74,7 +91,7 @@ export async function POST(request: NextRequest) {
       reranked: true,
     })
   } catch (error) {
-    console.error("[v0] Rerank API error:", error)
+    console.error("[rerank] API error")
     return NextResponse.json({ error: "Internal server error during reranking" }, { status: 500 })
   }
 }

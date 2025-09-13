@@ -13,11 +13,21 @@ export function PillManualStep({ onComplete }: PillManualStepProps) {
     color: "",
     front_imprint: "",
     back_imprint: "",
-    size_mm: undefined,
+    size_mm: 0,
     scored: false,
     coating: "",
-    confidence: 1.0,
+    confidence: 0,
+    reasoning: "",
   }
 
-  return <PillAttributesStep initialAttributes={emptyAttributes} onComplete={onComplete} showOcrAlternatives={false} />
+  return (
+    <PillAttributesStep
+      initialAttributes={emptyAttributes}
+      onComplete={onComplete}
+      showOcrAlternatives={false}
+      entryMode="manual"
+      pillImages={[]}
+      setPillImages={() => {}}
+    />
+  )
 }

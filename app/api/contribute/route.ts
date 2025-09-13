@@ -3,7 +3,7 @@ import { createServerClient } from "@/lib/server"
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerClient()
+  const supabase = await createServerClient()
     const formData = await request.formData()
 
     const frontImage = formData.get("frontImage") as File

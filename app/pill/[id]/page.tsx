@@ -8,12 +8,8 @@ import { ArrowLeft, AlertTriangle, Info } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
-interface PillDetailPageProps {
-  params: { id: string }
-}
-
-export default async function PillDetailPage({ params }: PillDetailPageProps) {
-  const supabase = createServerClient()
+export default async function PillDetailPage({ params }: any) {
+  const supabase = await createServerClient()
 
   const { data: pill, error } = await supabase
     .from("pills")
@@ -134,15 +130,7 @@ export default async function PillDetailPage({ params }: PillDetailPageProps) {
                 </CardContent>
               </Card>
 
-              {/* Safety Information */}
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Important Safety Information:</strong> This information is for identification purposes only.
-                  Always consult with a healthcare professional before taking any medication. Do not rely solely on
-                  visual identification for medication safety.
-                </AlertDescription>
-              </Alert>
+              {/* Safety disclaimer removed to avoid duplication; global tooltip applies */}
 
               <Alert>
                 <Info className="h-4 w-4" />

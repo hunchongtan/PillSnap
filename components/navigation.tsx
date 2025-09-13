@@ -8,8 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import { Pill, Info, Shield, Zap, Database, Eye, Search, AlertTriangle } from "lucide-react"
+import { Info, Shield, Zap, Database, Eye, Search, AlertTriangle } from "lucide-react"
 
 export function Navigation() {
   return (
@@ -29,16 +28,11 @@ export function Navigation() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-sm">
-                <Pill className="w-6 h-6 text-white" />
-              </div>
+              <img src="/icon.svg" alt="PillSnap" className="h-20 w-20" />
               <div>
                 <span className="text-2xl font-bold text-foreground">PillSnap</span>
                 <div className="text-sm text-muted-foreground">Pill Identifier</div>
               </div>
-              <Badge variant="secondary" className="ml-2 text-xs">
-                AI-Powered
-              </Badge>
             </div>
 
             <div className="flex items-center gap-2">
@@ -64,13 +58,11 @@ function AboutDialog() {
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Pill className="w-5 h-5" />
             About PillSnap
           </DialogTitle>
           <DialogDescription className="text-left space-y-4 pt-4">
             <p>
-              PillSnap is an AI-powered pill identification tool that helps users identify medications through image
-              analysis. Our system combines advanced computer vision and machine learning to analyze pill
+              PillSnap helps users identify medications from images. The system uses computer vision to analyze pill
               characteristics.
             </p>
 
@@ -105,18 +97,7 @@ function AboutDialog() {
               </div>
             </div>
 
-            <div className="bg-muted p-4 rounded-lg">
-              <div className="flex items-start gap-2">
-                <Shield className="w-4 h-4 text-destructive mt-1 flex-shrink-0" />
-                <div>
-                  <p className="font-semibold text-foreground">Important Disclaimer</p>
-                  <p className="text-sm text-muted-foreground">
-                    This tool is for informational purposes only. Always consult healthcare professionals for medication
-                    identification and safety.
-                  </p>
-                </div>
-              </div>
-            </div>
+            {/* Disclaimer block removed to avoid duplication; global tooltip remains */}
           </DialogDescription>
         </DialogHeader>
       </DialogContent>
@@ -158,9 +139,9 @@ function HowItWorksDialog() {
                   <span className="text-secondary-foreground text-sm font-bold">2</span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground">AI-Powered Detection</h4>
+                  <h4 className="font-semibold text-foreground">Automated Detection</h4>
                   <p className="text-sm text-muted-foreground">
-                    Roboflow AI detects and segments the pill boundaries, isolating the medication from the background.
+                    Roboflow detects and segments the pill boundaries, isolating the medication from the background.
                   </p>
                 </div>
               </div>
@@ -220,11 +201,11 @@ function HowItWorksDialog() {
             <div className="bg-accent/10 p-4 rounded-lg border border-accent/20">
               <h4 className="font-semibold text-foreground mb-2">Technology Stack</h4>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="outline">Roboflow AI</Badge>
-                <Badge variant="outline">OpenAI Vision</Badge>
-                <Badge variant="outline">Supabase</Badge>
-                <Badge variant="outline">Next.js</Badge>
-                <Badge variant="outline">TypeScript</Badge>
+                <span className="px-2 py-1 text-xs border rounded">Roboflow</span>
+                <span className="px-2 py-1 text-xs border rounded">OpenAI Vision</span>
+                <span className="px-2 py-1 text-xs border rounded">Supabase</span>
+                <span className="px-2 py-1 text-xs border rounded">Next.js</span>
+                <span className="px-2 py-1 text-xs border rounded">TypeScript</span>
               </div>
             </div>
           </DialogDescription>

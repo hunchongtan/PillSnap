@@ -20,6 +20,8 @@ interface PillAttributesStepProps {
   pillImages: string[]
   setPillImages: (images: string[]) => void
   isLoading?: boolean
+  initialAttributes?: ExtractedPillAttributes
+  showOcrAlternatives?: boolean // Added this property
 }
 
 const SHAPES = [
@@ -65,6 +67,7 @@ const DOSAGE_FORMS = [
 ]
 
 const SIZE_BINS = ["XS", "S", "M", "L"]
+const SIZES_MM = [5, 6, 7, 8, 9, 10, 12]
 
 export function PillAttributesStep({
   entryMode,
@@ -72,8 +75,11 @@ export function PillAttributesStep({
   pillImages,
   setPillImages,
   isLoading,
+  initialAttributes,
 }: PillAttributesStepProps) {
-  const [attributes, setAttributes] = useState<ExtractedPillAttributes>({})
+  const [attributes, setAttributes] = useState<ExtractedPillAttributes>(
+    () => initialAttributes || { confidence: 0, reasoning: "" }
+  )
   const [imprintWarning, setImprintWarning] = useState(false)
   const [ocrAlternatives, setOcrAlternatives] = useState<{ front_imprint?: string[]; back_imprint?: string[] }>({})
 
@@ -146,7 +152,7 @@ export function PillAttributesStep({
                   <img
                     src={pillImages[0] || "/placeholder.svg"}
                     alt="Detected pill"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 ) : (
                   <div className="text-muted-foreground text-sm text-center">
@@ -302,18 +308,18 @@ export function PillAttributesStep({
               <div className="space-y-2">
                 <Label>Size (optional)</Label>
                 <Select
-                  value={attributes.size_mm?.toString() || ""}
+                  value={attributes.size_mm ? String(attributes.size_mm) : ""}
                   onValueChange={(value) =>
-                    setAttributes((prev) => ({ ...prev, size_mm: value ? Number.parseInt(value) : undefined }))
+                    setAttributes((prev) => ({ ...prev, size_mm: value ? Number(value) : undefined }))
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select size bin" />
+                    <SelectValue placeholder="Select size (mm)" />
                   </SelectTrigger>
                   <SelectContent>
-                    {SIZE_BINS.map((size, i) => (
-                      <SelectItem key={size} value={(i + 1).toString()}>
-                        {size}
+                    {SIZES_MM.map((mm) => (
+                      <SelectItem key={mm} value={String(mm)}>
+                        {mm} mm
                       </SelectItem>
                     ))}
                   </SelectContent>

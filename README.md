@@ -1,7 +1,7 @@
 
 # PillSnap
 
-**PillSnap** is an AI-powered web app for identifying pills from images. It uses computer vision to detect and crop pills, then leverages OpenAI's **gpt-4o-mini** for identification, returning the most likely matches with confidence scores.
+**PillSnap** is an AI-powered web app for extracting pill attributes from an image and searching a local database for likely matches. It uses computer vision to detect and crop pills, then leverages OpenAI's **gpt-4o-mini** for attribute extraction; the database search derives confidence scores.
 
 ## Features
 
@@ -34,7 +34,15 @@ Try it live here: [pill-snap.vercel.app](https://pill-snap.vercel.app/)
 - **Identification:** OpenAI gpt-4o-mini (Vision).
 - **Frontend:** Next.js App Router, React, Tailwind, shadcn/ui.
 
-## Deployment
+## Scripts
 
-- Production build: `npm run build`
-- All type and lint errors are resolved except for non-blocking `<img>` warnings (see Next.js docs for optimization).
+- `npm run dev` — Start dev server
+- `npm run build` — Production build
+- `npm run lint` — ESLint check
+- `npm run typecheck` — TypeScript types only
+- `npm run check` — Lint + typecheck
+- `npm run format` — Prettier format
+
+## Environment
+
+Copy `.env.example` to `.env.local` and fill the values. Server variables are validated at runtime via Zod in `lib/env.ts`.

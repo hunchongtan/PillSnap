@@ -10,6 +10,23 @@ import { Upload, Camera, X, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import { PillAttributesStep } from "./pill-attributes-step"
 import type { ExtractedPillAttributes } from "@/lib/openai-vision"
+import type { RoboflowResponse } from "@/lib/roboflow"
+
+type CropResponse = { image: string; mimeType: string; width: number; height: number }
+
+type AnalyzeAttributes = {
+  shape?: string
+  color?: string
+  size_mm?: number
+  thickness_mm?: number
+  front_imprint?: string
+  back_imprint?: string
+  coating?: string
+  scoring?: string
+  notes?: string
+}
+
+type AnalyzeResponse = { attributes: AnalyzeAttributes }
 
 interface UploadedFile {
   file: File
@@ -61,43 +78,106 @@ export function PillUploadStep({ onComplete }: PillUploadStepProps) {
 
     try {
       setCurrentStep("Detecting pill boundaries...")
-      setProgress(30)
+      setProgress(20)
 
       const formData = new FormData()
       formData.append("file", uploadedFile.file)
 
-      const segmentResponse = await fetch("/api/roboflow/segment", {
+      const segmentResponse = await fetch("/api/segment", {
         method: "POST",
         body: formData,
       })
+      if (!segmentResponse.ok) throw new Error("Segmentation failed")
+      const segmentJson = (await segmentResponse.json()) as RoboflowResponse
+      const preds = segmentJson.predictions || []
+      if (!preds.length) throw new Error("No pill detected")
+      const best = preds.slice().sort((a,b)=> (b.confidence||0) - (a.confidence||0))[0] || preds[0]
 
-      if (!segmentResponse.ok) {
-        throw new Error("Segmentation failed")
-      }
+      setCurrentStep("Cropping detected pill...")
+      setProgress(50)
 
-      setCurrentStep("Extracting visual features...")
-      setProgress(60)
-
-      const visionResponse = await fetch("/api/openai/analyze-pill", {
+      const base64Original = await fileToBase64(uploadedFile.file)
+      const cropResponse = await fetch("/api/crop", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          image: await fileToBase64(uploadedFile.file),
+          image: base64Original,
           mimeType: uploadedFile.file.type,
+          box: { x: best.x, y: best.y, width: best.width, height: best.height },
+          paddingPct: 0.06,
         }),
       })
+      if (!cropResponse.ok) throw new Error("Cropping failed")
+      const cropJson = (await cropResponse.json()) as CropResponse
+      const previewUrl = `data:${cropJson.mimeType};base64,${cropJson.image}`
 
-      if (!visionResponse.ok) {
-        throw new Error("Vision analysis failed")
+      // show preview by reusing pillImages channel via PillAttributesStep later
+      // For this component preview, update uploadedFile.preview to cropped preview
+      setUploadedFile((prev) => (prev ? { ...prev, preview: previewUrl } : prev))
+
+      setCurrentStep("Analyzing cropped image...")
+      setProgress(70)
+
+      const visionResponse = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: cropJson.image,
+          mimeType: cropJson.mimeType,
+        }),
+      })
+      if (!visionResponse.ok) throw new Error("Vision analysis failed")
+      const visionResult = (await visionResponse.json()) as AnalyzeResponse
+
+      // Map attributes to UI-friendly values
+      const attrs = visionResult.attributes || {}
+
+      const shapeMap: Record<string,string> = { "round":"Round","circle":"Round","oval":"Oval","capsule":"Capsule","oblong":"Oval","triangle":"Triangle","square":"Square","pentagon":"Pentagon","hexagon":"Hexagon","diamond":"Diamond","heart":"Other","tear":"Other","teardrop":"Other" }
+      const colorMap: Record<string,string> = { "white":"White","off-white":"White","beige":"Beige","black":"Black","blue":"Blue","brown":"Brown","clear":"Clear","gold":"Gold","gray":"Gray","green":"Green","maroon":"Maroon","orange":"Orange","peach":"Peach","pink":"Pink","purple":"Purple","red":"Red","tan":"Tan","yellow":"Yellow" }
+
+      const mapValue = (map: Record<string,string>, v?: string) => {
+        if (!v) return undefined
+        const k = v.toLowerCase().trim()
+        return map[k]
       }
 
-      const visionResult = await visionResponse.json()
-      setExtractedAttributes(visionResult.attributes)
+      const SIZES_MM = [5,6,7,8,9,10,12]
+      const closestSize = (target?: number, options:number[] = SIZES_MM) => {
+        if (!target || target <= 0) return undefined
+        return options.reduce((a,b)=> Math.abs(b-(target as number)) < Math.abs(a-(target as number)) ? b : a)
+      }
+
+      const mappedShape = mapValue(shapeMap, attrs.shape) || ""
+      const mappedColor = mapValue(colorMap, attrs.color) || ""
+      const sizeVal = closestSize(typeof attrs.size_mm === "number" ? attrs.size_mm : Number(attrs.size_mm))
+      const scored = attrs.scoring && typeof attrs.scoring === "string" && !["none","unclear"].includes(attrs.scoring.toLowerCase())
+
+      // Dosage form heuristic mapping
+      let dosageForm = ""
+      const notesLc = (attrs.notes || "").toLowerCase()
+      const coatingLc = (attrs.coating || "").toLowerCase()
+      if (mappedShape === "Capsule") dosageForm = "Capsule"
+      else if (notesLc.includes("softgel")) dosageForm = "Softgel"
+      else if (coatingLc.includes("extended")) dosageForm = "Extended-release"
+      else if (coatingLc.includes("delayed")) dosageForm = "Delayed-release"
+
+      setExtractedAttributes({
+        front_imprint: attrs.front_imprint && attrs.front_imprint !== "unclear" ? attrs.front_imprint : "",
+        back_imprint: attrs.back_imprint && attrs.back_imprint !== "unclear" ? attrs.back_imprint : "",
+        shape: mappedShape,
+        color: mappedColor,
+        size_mm: sizeVal,
+        coating: dosageForm,
+        scoring: attrs.scoring,
+        scored: !!scored,
+        confidence: 0,
+        reasoning: "",
+      })
 
       setProgress(100)
       setCurrentStep("Analysis complete!")
     } catch (err) {
-      setError("Failed to process image. Please try again.")
+      setError(err instanceof Error ? err.message : "Failed to process image. Please try again.")
       console.error("Processing error:", err)
     } finally {
       setIsProcessing(false)
@@ -118,7 +198,14 @@ export function PillUploadStep({ onComplete }: PillUploadStepProps) {
 
   if (extractedAttributes) {
     return (
-      <PillAttributesStep initialAttributes={extractedAttributes} onComplete={onComplete} showOcrAlternatives={true} />
+      <PillAttributesStep
+        initialAttributes={extractedAttributes}
+        onComplete={onComplete}
+        showOcrAlternatives={true}
+        entryMode="photo"
+        pillImages={[uploadedFile?.preview || ""]}
+        setPillImages={() => {}}
+      />
     )
   }
 

@@ -1,16 +1,30 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { searchPills, saveUserSearch } from "@/lib/database"
 import type { ExtractedPillAttributes } from "@/lib/openai-vision"
 
+export const runtime = "nodejs"
+
+const AttributesSchema = z.object({
+  shape: z.string().optional(),
+  color: z.string().optional(),
+  front_imprint: z.string().optional(),
+  back_imprint: z.string().optional(),
+  size_mm: z.number().optional(),
+})
+
+const BodySchema = z.object({
+  attributes: AttributesSchema,
+  sessionId: z.string().optional(),
+})
+
 export async function POST(request: NextRequest) {
   try {
-    const { attributes, sessionId } = await request.json()
-
-    if (!attributes) {
-      return NextResponse.json({ error: "No search attributes provided" }, { status: 400 })
+    const parsed = BodySchema.safeParse(await request.json())
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid search payload" }, { status: 400 })
     }
-
-    console.log("[v0] Starting pill database search with attributes:", attributes)
+    const { attributes, sessionId } = parsed.data
 
     // Search the database using the provided attributes
     const searchResults = await searchPills({
@@ -41,12 +55,6 @@ export async function POST(request: NextRequest) {
       user_agent: request.headers.get("user-agent") || undefined,
     })
 
-    console.log("[v0] Database search complete:", {
-      resultsCount: searchResults.length,
-      confidence: confidenceScore,
-      searchId: searchRecord.id,
-    })
-
     return NextResponse.json({
       results: searchResults,
       confidence: confidenceScore,
@@ -54,12 +62,20 @@ export async function POST(request: NextRequest) {
       totalResults: searchResults.length,
     })
   } catch (error) {
-    console.error("[v0] Pill search API error:", error)
+    console.error("[search/pills] API error")
     return NextResponse.json({ error: "Internal server error during pill search" }, { status: 500 })
   }
 }
 
-function calculateSearchConfidence(attributes: ExtractedPillAttributes, results: any[]): number {
+type MinimalAttrs = {
+  shape?: string
+  color?: string
+  front_imprint?: string
+  back_imprint?: string
+  size_mm?: number
+}
+
+function calculateSearchConfidence(attributes: MinimalAttrs, results: any[]): number {
   if (results.length === 0) return 0
 
   // Base confidence on number of matching attributes and result count

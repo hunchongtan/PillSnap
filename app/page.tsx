@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { PillWizard } from "@/components/pill-wizard"
+import { PillMultiReview } from "@/components/pill-multi-review"
 import { PillSearchBar } from "@/components/pill-search-bar"
 import { PillResultsGrid } from "@/components/pill-results-grid"
 import { Navigation } from "@/components/navigation"
@@ -40,7 +40,7 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           attributes: query,
-          sessionId: `quick_${Date.now()}`,
+          sessionId: `quick_${new Date().toISOString()}`,
         }),
       })
 
@@ -76,7 +76,8 @@ export default function HomePage() {
     } else if (step === "results") {
       setCurrentStep("results")
       console.log("[handleStepClick] Current step set to 'results'")
-      setShowWizard(false)
+      // Keep wizard visible for camera flow results
+      setShowWizard(flowType === "camera")
     }
   }
 
@@ -104,7 +105,7 @@ export default function HomePage() {
     setShowWizard(false)
   }
 
-  if (showWizard && currentStep === "review") {
+  if (showWizard && (currentStep === "review" || currentStep === "results")) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
@@ -116,18 +117,35 @@ export default function HomePage() {
             onBack={handleBack}
           />
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-foreground mb-2">Review pill attributes</h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Review and edit the detected pill attributes before searching.
-            </p>
+            {currentStep === "review" ? (
+              <>
+                <h1 className="text-4xl font-bold text-foreground mb-2">Review pill attributes</h1>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  Review and edit the detected pill attributes before searching.
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-4xl font-bold text-foreground mb-2">Results</h1>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  Browse matches based on the selected pill's attributes.
+                </p>
+              </>
+            )}
           </div>
-          <PillWizard
-            onComplete={(result) => {
-              setSearchResults(result)
-              setCurrentStep("results")
-              setShowWizard(false)
-            }}
-          />
+          <div className="max-w-6xl mx-auto">
+            <PillMultiReview
+              onFlowStepChange={(s) => {
+                if (s === 3) {
+                  setCurrentStep("results")
+                  setShowWizard(true)
+                } else if (s === 2) {
+                  setCurrentStep("review")
+                  setShowWizard(true)
+                }
+              }}
+            />
+          </div>
         </div>
         <Footer />
       </div>
@@ -138,14 +156,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      <div className="bg-amber-50 border-b border-amber-200 py-2">
-        <div className="container mx-auto px-4">
-          <p className="text-sm text-amber-800 text-center">
-            <strong>Medical Disclaimer:</strong> This tool is for informational purposes only and should not replace
-            professional medical advice. Always consult with a healthcare provider before taking any medication.
-          </p>
-        </div>
-      </div>
+      {/* Disclaimer banner removed in favor of single global tooltip in Navigation */}
 
       <div className="container mx-auto px-4 py-8">
         {currentStep !== "search" && (
@@ -163,7 +174,7 @@ export default function HomePage() {
             <div className="text-center mb-8">
               <h1 className="text-4xl font-bold text-foreground mb-2">Search for your pill</h1>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Search by imprint, shape, and color, or use our camera for AI-powered identification.
+                Search by imprint, shape, and color, or use the camera to extract attributes from a photo.
               </p>
             </div>
 
@@ -205,12 +216,7 @@ export default function HomePage() {
               <PillResultsGrid results={searchResults.results} isLoading={isSearching} />
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-8 max-w-4xl mx-auto">
-              <p className="text-sm text-amber-800 text-center">
-                <strong>Medical Disclaimer:</strong> This tool is for informational purposes only and should not replace
-                professional medical advice. Always consult with a healthcare provider before taking any medication.
-              </p>
-            </div>
+            {/* Inline disclaimer removed to avoid duplication; Navigation tooltip covers this */}
           </>
         )}
       </div>
