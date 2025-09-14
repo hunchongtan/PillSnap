@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/server"
+import { createClient } from '@/lib/server'
 
 export interface Pill {
   id: string
@@ -49,24 +49,24 @@ export async function searchPills(attributes: {
 }) {
   const supabase = await createClient()
 
-  let query = supabase.from("pills").select("*")
+  let query = supabase.from('pills').select('*')
 
   // Apply filters based on provided attributes
   if (attributes.shape) {
-    query = query.ilike("shape", `%${attributes.shape}%`)
+    query = query.ilike('shape', `%${attributes.shape}%`)
   }
   if (attributes.color) {
-    query = query.ilike("color", `%${attributes.color}%`)
+    query = query.ilike('color', `%${attributes.color}%`)
   }
   if (attributes.front_imprint) {
-    query = query.ilike("front_imprint", `%${attributes.front_imprint}%`)
+    query = query.ilike('front_imprint', `%${attributes.front_imprint}%`)
   }
   if (attributes.back_imprint) {
-    query = query.ilike("back_imprint", `%${attributes.back_imprint}%`)
+    query = query.ilike('back_imprint', `%${attributes.back_imprint}%`)
   }
   if (attributes.size_mm) {
     // Allow for 2mm tolerance in size matching
-    query = query.gte("size_mm", attributes.size_mm - 2).lte("size_mm", attributes.size_mm + 2)
+    query = query.gte('size_mm', attributes.size_mm - 2).lte('size_mm', attributes.size_mm + 2)
   }
 
   const { data, error } = await query.limit(20)
@@ -81,7 +81,7 @@ export async function searchPills(attributes: {
 export async function saveUserSearch(searchData: Partial<UserSearch>) {
   const supabase = await createClient()
 
-  const { data, error } = await supabase.from("user_searches").insert(searchData).select().single()
+  const { data, error } = await supabase.from('user_searches').insert(searchData).select().single()
 
   if (error) {
     throw new Error(`Failed to save search: ${error.message}`)
@@ -93,7 +93,11 @@ export async function saveUserSearch(searchData: Partial<UserSearch>) {
 export async function fuzzySearchPills(searchText: string) {
   const supabase = await createClient()
 
-  const { data, error } = await supabase.from("pills").select("*").textSearch("search_vector", searchText).limit(20)
+  const { data, error } = await supabase
+    .from('pills')
+    .select('*')
+    .textSearch('search_vector', searchText)
+    .limit(20)
 
   if (error) {
     throw new Error(`Fuzzy search failed: ${error.message}`)

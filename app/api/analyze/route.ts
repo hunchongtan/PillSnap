@@ -1,9 +1,9 @@
 // /app/api/analyze/route.ts
+import { COLOR_OPTIONS, SCORING_OPTIONS, SHAPE_OPTIONS } from '@/constants/pill-options'
 import { env } from '@/lib/env'
 import { type NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { z } from 'zod'
-import { SHAPE_OPTIONS, COLOR_OPTIONS, SCORING_OPTIONS } from "@/constants/pill-options";
 
 export const runtime = 'nodejs'
 
@@ -19,16 +19,16 @@ function isErrorWithProps(
 // === Schema: attributes-only ===
 const PillAttributesSchema = z
   .object({
-    shape: z.enum(SHAPE_OPTIONS).or(z.literal("")).default(""),
-    color: z.enum(COLOR_OPTIONS).or(z.literal("")).default(""),
+    shape: z.enum(SHAPE_OPTIONS).or(z.literal('')).default(''),
+    color: z.enum(COLOR_OPTIONS).or(z.literal('')).default(''),
     size_mm: z.coerce.number().min(0).default(0),
     thickness_mm: z.coerce.number().min(0).default(0),
-    front_imprint: z.string().default(""),
-    back_imprint: z.string().default(""),
-    scoring: z.enum(SCORING_OPTIONS).default("none"),
-    notes: z.string().default(""),
+    front_imprint: z.string().default(''),
+    back_imprint: z.string().default(''),
+    scoring: z.enum(SCORING_OPTIONS).default('none'),
+    notes: z.string().default(''),
   })
-  .strict();
+  .strict()
 
 const OutputSchema = z
   .object({
@@ -38,9 +38,9 @@ const OutputSchema = z
 
 // === Prompt ===
 function buildPrompt() {
-  const allowedShapes = SHAPE_OPTIONS.join(" | ");
-  const allowedColors = COLOR_OPTIONS.join(" | ");
-  const allowedScoring = SCORING_OPTIONS.join(" | ");
+  const allowedShapes = SHAPE_OPTIONS.join(' | ')
+  const allowedColors = COLOR_OPTIONS.join(' | ')
+  const allowedScoring = SCORING_OPTIONS.join(' | ')
   return `
 Return a single JSON object exactly like this (valid JSON, no extra keys):
 
@@ -62,7 +62,7 @@ Rules:
 - Scoring MUST be exactly one of ${allowedScoring}; use "none" when unclear or absent.
 - Do not identify the medicine; extract visible attributes only.
 - Output JSON only.
-`.trim();
+`.trim()
 }
 
 export async function POST(request: NextRequest) {
