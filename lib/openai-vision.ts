@@ -4,7 +4,6 @@ export interface ExtractedPillAttributes {
   size_mm?: number;
   front_imprint?: string;
   back_imprint?: string;
-  coating?: string;
   scoring?: string;
   scored?: boolean; // Added this property
   confidence: number;
@@ -82,13 +81,12 @@ function fileToBase64(file: File): Promise<string> {
 export const PILL_ANALYSIS_PROMPT = `
 You are a pharmaceutical expert analyzing a pill image. Extract the following attributes with high precision:
 
-1. **Shape**: Round, Oval, Capsule, Square, Diamond, Triangle, or Other
-2. **Color**: Primary color(s) - be specific (e.g., "Light Blue", "White", "Pink", "Orange")
+1. **Shape**: Choose from the app's allowed list
+2. **Color**: Choose from the app's allowed list (or empty if unsure)
 3. **Size**: Estimate diameter/length in millimeters (common range: 4-25mm)
 4. **Front Imprint**: Any text, numbers, or symbols on the front side
 5. **Back Imprint**: Any text, numbers, or symbols on the back side (if visible)
-6. **Coating**: Uncoated, Film-coated, Sugar-coated, Enteric-coated, or Unknown
-7. **Scoring**: None, Single score, Cross score, Multiple scores, or Unknown
+6. **Scoring**: "none", "1 score", or "2 scores"
 
 Respond in JSON format:
 {
@@ -97,7 +95,6 @@ Respond in JSON format:
   "size_mm": number,
   "front_imprint": "string",
   "back_imprint": "string",
-  "coating": "string",
   "scoring": "string",
   "confidence": number (0-1),
   "reasoning": "Brief explanation of your analysis"

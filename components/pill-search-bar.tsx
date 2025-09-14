@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SHAPE_OPTIONS, COLOR_OPTIONS } from "@/constants/pill-options"
 import { Card, CardContent } from "@/components/ui/card"
 import { Camera, Search } from "lucide-react"
 
@@ -48,7 +49,7 @@ export function PillSearchBar({ onSearch, onCameraClick, initialValues }: PillSe
           {/* Search Input */}
           <div className="flex-1">
             <Input
-              placeholder="Enter imprint text (e.g., 'ADVIL', 'L544')"
+              placeholder="Enter Pill Imprint"
               value={imprint}
               onChange={(e) => setImprint(e.target.value)}
               onKeyPress={handleKeyPress}
@@ -63,14 +64,9 @@ export function PillSearchBar({ onSearch, onCameraClick, initialValues }: PillSe
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="any">Any Shape</SelectItem>
-              <SelectItem value="round">Round</SelectItem>
-              <SelectItem value="oval">Oval</SelectItem>
-              <SelectItem value="capsule">Capsule</SelectItem>
-              <SelectItem value="square">Square</SelectItem>
-              <SelectItem value="rectangular">Rectangular</SelectItem>
-              <SelectItem value="triangular">Triangular</SelectItem>
-              <SelectItem value="diamond">Diamond</SelectItem>
-              <SelectItem value="hexagonal">Hexagonal</SelectItem>
+              {SHAPE_OPTIONS.map((s) => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -81,17 +77,9 @@ export function PillSearchBar({ onSearch, onCameraClick, initialValues }: PillSe
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="any">Any Color</SelectItem>
-              <SelectItem value="white">White</SelectItem>
-              <SelectItem value="blue">Blue</SelectItem>
-              <SelectItem value="red">Red</SelectItem>
-              <SelectItem value="yellow">Yellow</SelectItem>
-              <SelectItem value="green">Green</SelectItem>
-              <SelectItem value="orange">Orange</SelectItem>
-              <SelectItem value="pink">Pink</SelectItem>
-              <SelectItem value="purple">Purple</SelectItem>
-              <SelectItem value="brown">Brown</SelectItem>
-              <SelectItem value="gray">Gray</SelectItem>
-              <SelectItem value="black">Black</SelectItem>
+              {COLOR_OPTIONS.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
 

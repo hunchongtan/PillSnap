@@ -18,6 +18,8 @@ export function ResultsStep({ pill, allPills, onBack, onSelectPill }: { pill: De
   const color = pill.attributes?.color || ""
   const size_mm = pill.attributes?.size_mm || 0
   const scored = !!(pill.attributes?.scoring && !["none","unclear"].includes(pill.attributes.scoring.toLowerCase()))
+  const extra = pill.extra || { patientHistory: "", possibleName: "", notes: "" }
+  const hasExtra = !!(extra.patientHistory || extra.possibleName || extra.notes)
 
   return (
     <div className="pt-4 md:pt-6 space-y-6">
@@ -55,6 +57,32 @@ export function ResultsStep({ pill, allPills, onBack, onSelectPill }: { pill: De
           </div>
         </CardContent>
       </Card>
+
+      {hasExtra && (
+        <Card className="rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+          <CardContent className="p-4 space-y-2 text-sm">
+            <div className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">Additional Information</div>
+            {extra.possibleName && (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="text-muted-foreground">Possible Pill Name</div>
+                <div className="font-medium">{extra.possibleName}</div>
+              </div>
+            )}
+            {extra.patientHistory && (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="text-muted-foreground">Patient History / Context</div>
+                <div className="font-medium whitespace-pre-wrap">{extra.patientHistory}</div>
+              </div>
+            )}
+            {extra.notes && (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="text-muted-foreground">Notes</div>
+                <div className="font-medium whitespace-pre-wrap">{extra.notes}</div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Search integration */}
       <ResultsSearch attributes={{ front, back, shape, color, size_mm, scored }} />

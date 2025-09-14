@@ -16,7 +16,6 @@ export interface Pill {
   back_imprint?: string
   drug_class?: string
   schedule?: string
-  coating?: string
   scoring?: string
   manufacturer?: string
 }

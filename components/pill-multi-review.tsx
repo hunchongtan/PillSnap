@@ -13,6 +13,9 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { ResultsStep } from "./results-step"
+import { Textarea } from "@/components/ui/textarea"
+import { Pill as PillIcon } from "lucide-react"
+import { SHAPE_OPTIONS, COLOR_OPTIONS, SCORING_OPTIONS } from "@/constants/pill-options"
 
 const SIZES_MM = [5,6,7,8,9,10,12]
 const shapeMap: Record<string,string> = { round:"Round", circle:"Round", oval:"Oval", oblong:"Oval", capsule:"Capsule", triangle:"Triangle", square:"Square", pentagon:"Pentagon", hexagon:"Hexagon", diamond:"Diamond", heart:"Heart", tear:"Teardrop", teardrop:"Teardrop" }
@@ -20,8 +23,8 @@ const colorMap: Record<string,string> = { white:"White","off-white":"White", bei
 const mapValue = (map:Record<string,string>, v?:string) => v ? map[v.toLowerCase().trim()] : undefined
 const closestSize = (target?:number, options:number[] = SIZES_MM) => !target || target<=0 ? undefined : options.reduce((a,b)=> Math.abs(b-(target as number)) < Math.abs(a-(target as number)) ? b : a)
 
-const DEFAULT_ATTRS = { shape: "", color: "", size_mm: 0, thickness_mm: 0, front_imprint: "", back_imprint: "", coating: "", scoring: "", notes: "" }
-const ensureAttrs = (a?: { shape: string; color: string; size_mm: number; thickness_mm: number; front_imprint: string; back_imprint: string; coating: string; scoring: string; notes: string }) => ({ ...DEFAULT_ATTRS, ...(a || {}) })
+const DEFAULT_ATTRS = { shape: "", color: "", size_mm: 0, thickness_mm: 0, front_imprint: "", back_imprint: "", scoring: "", notes: "" }
+const ensureAttrs = (a?: { shape: string; color: string; size_mm: number; thickness_mm: number; front_imprint: string; back_imprint: string; scoring: string; notes: string }) => ({ ...DEFAULT_ATTRS, ...(a || {}) })
 
 function Field({ label, badge, children, highlight }: { label: string; badge?: "Auto" | "Check"; children: React.ReactNode; highlight?: "auto" | "warn" | "error" }) {
   const ring = highlight === "auto" ? "ring-2 ring-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/30" : highlight === "warn" ? "ring-2 ring-amber-400/60 bg-amber-50 dark:bg-amber-950/30" : highlight === "error" ? "ring-2 ring-rose-500/70 bg-rose-50 dark:bg-rose-950/30" : ""
@@ -43,12 +46,12 @@ type FormState = {
   shape: FieldState<string>
   color: FieldState<string>
   size: FieldState<number | undefined>
-  scored: FieldState<boolean>
+  scoring: FieldState<string>
 }
 
 type FlowStep = 1 | 2 | 3
 export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step: FlowStep) => void }) {
-  const { dets, processing, error, run, setDets } = usePillPipeline()
+  const { dets, processing, error, run, setDets, updateDet } = usePillPipeline()
   const [showAll, setShowAll] = useState(false)
   const [uploaded, setUploaded] = useState(false)
   const [forms, setForms] = useState<Record<string, FormState>>({})
@@ -108,7 +111,7 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
         const normShape = mapValue(shapeMap, a.shape) || a.shape || ""
         const normColor = mapValue(colorMap, a.color) || a.color || ""
         const sizeVal = a.size_mm ? closestSize(a.size_mm) : undefined
-        const scoredBool = !!(a.scoring && !["none","unclear"].includes(a.scoring.toLowerCase()))
+  const scoringVal = a.scoring && a.scoring !== "unclear" ? a.scoring : "none"
         const frontVal = a.front_imprint && a.front_imprint !== "unclear" ? a.front_imprint : ""
         const backVal = a.back_imprint && a.back_imprint !== "unclear" ? a.back_imprint : ""
         next[d.id] = {
@@ -117,7 +120,7 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
           shape: { value: normShape, isAutoFilled: !!normShape, isEdited: false },
           color: { value: normColor, isAutoFilled: !!normColor, isEdited: false },
           size: { value: sizeVal, isAutoFilled: typeof sizeVal === "number", isEdited: false },
-          scored: { value: scoredBool, isAutoFilled: scoredBool, isEdited: false },
+          scoring: { value: scoringVal, isAutoFilled: scoringVal !== "none", isEdited: false },
         }
       }
       return next
@@ -153,9 +156,11 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
             <div {...getRootProps()} className={`text-center cursor-pointer transition-colors ${isDragActive ? "text-accent" : "text-muted-foreground"}`}>
               <input {...getInputProps()} />
               <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 bg-muted rounded-full" />
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+                  <PillIcon className="w-8 h-8 text-muted-foreground" />
+                </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-card-foreground mb-2">Upload pill image</h3>
+                  <h3 className="text-lg font-semibold text-card-foreground mb-2">Upload Loose Pill Image (Supports Multiple Pills)</h3>
                   <p className="text-muted-foreground mb-4">Drag and drop an image, or click to browse</p>
                   <Button variant="secondary">Choose File</Button>
                 </div>
@@ -211,7 +216,7 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                       setForms(prev => ({
                         ...prev,
                         [det.id]: {
-                          ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scored:{value:false,isAutoFilled:false,isEdited:false} }),
+                          ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"none",isAutoFilled:false,isEdited:false} }),
                           front: { value: e.target.value, isAutoFilled: false, isEdited: true },
                         }
                       }))
@@ -223,7 +228,7 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                       setForms(prev => ({
                         ...prev,
                         [det.id]: {
-                          ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scored:{value:false,isAutoFilled:false,isEdited:false} }),
+                          ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"none",isAutoFilled:false,isEdited:false} }),
                           back: { value: e.target.value, isAutoFilled: false, isEdited: true },
                         }
                       }))
@@ -236,14 +241,14 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                         setForms(prev => ({
                           ...prev,
                           [det.id]: {
-                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scored:{value:false,isAutoFilled:false,isEdited:false} }),
+                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"none",isAutoFilled:false,isEdited:false} }),
                             shape: { value: v, isAutoFilled: false, isEdited: true },
                           }
                         }))
                         setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes: { ...ensureAttrs(d.attributes), shape: v } } : d))
                       }}>
                         <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select shape"/></SelectTrigger>
-                        <SelectContent>{["Round","Oval","Capsule","Square","Triangle","Diamond","Pentagon","Hexagon","Octagon","Other"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                        <SelectContent>{SHAPE_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                       </Select>
                     </Field>
                     <Field label="Color" badge={forms[det.id]?.color.isAutoFilled && !forms[det.id]?.color.isEdited ? "Auto" : undefined} highlight={forms[det.id]?.color.isAutoFilled && !forms[det.id]?.color.isEdited ? "auto" : undefined}>
@@ -251,14 +256,14 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                         setForms(prev => ({
                           ...prev,
                           [det.id]: {
-                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scored:{value:false,isAutoFilled:false,isEdited:false} }),
+                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"none",isAutoFilled:false,isEdited:false} }),
                             color: { value: v, isAutoFilled: false, isEdited: true },
                           }
                         }))
                         setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes: { ...ensureAttrs(d.attributes), color: v } } : d))
                       }}>
                         <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select color"/></SelectTrigger>
-                        <SelectContent>{["White","Yellow","Orange","Red","Pink","Purple","Blue","Green","Brown","Gray","Black","Clear","Beige","Gold","Maroon","Peach","Tan"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                        <SelectContent>{COLOR_OPTIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                       </Select>
                     </Field>
                   </div>
@@ -269,7 +274,7 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                         setForms(prev => ({
                           ...prev,
                           [det.id]: {
-                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scored:{value:false,isAutoFilled:false,isEdited:false} }),
+                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"none",isAutoFilled:false,isEdited:false} }),
                             size: { value: num, isAutoFilled: false, isEdited: true },
                           }
                         }))
@@ -279,22 +284,49 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                         <SelectContent>{SIZES_MM.map(mm => <SelectItem key={mm} value={String(mm)}>{mm} mm</SelectItem>)}</SelectContent>
                       </Select>
                     </Field>
-                    <Field label="Scored">
-                      <div className="flex items-center gap-2">
-                        <Switch checked={!!forms[det.id]?.scored.value} onCheckedChange={(checked)=> {
-                          setForms(prev => ({
-                            ...prev,
-                            [det.id]: {
-                              ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scored:{value:false,isAutoFilled:false,isEdited:false} }),
-                              scored: { value: checked, isAutoFilled: false, isEdited: true },
-                            }
-                          }))
-                          setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes: { ...ensureAttrs(d.attributes), scoring: checked ? "1 score" : "none" } } : d))
-                        }} />
-                        <span className="text-xs text-muted-foreground">Has a score line</span>
-                      </div>
+                    <Field label="Scoring">
+                      <Select value={forms[det.id]?.scoring.value || "none"} onValueChange={(v)=> {
+                        setForms(prev => ({
+                          ...prev,
+                          [det.id]: {
+                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"none",isAutoFilled:false,isEdited:false} }),
+                            scoring: { value: v, isAutoFilled: false, isEdited: true },
+                          }
+                        }))
+                        setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes: { ...ensureAttrs(d.attributes), scoring: v } } : d))
+                      }}>
+                        <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select scoring"/></SelectTrigger>
+                        <SelectContent>{SCORING_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                      </Select>
                     </Field>
                   </div>
+                </div>
+
+                <div className="space-y-3 border-t pt-3">
+                  <div className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">Additional Information (optional)</div>
+                  <Field label="Possible Pill Name">
+                    <Input
+                      className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"
+                      value={det.extra?.possibleName || ""}
+                      onChange={(e) => updateDet(det.id, { extra: { possibleName: e.target.value } })}
+                    />
+                  </Field>
+                  <Field label="Patient History / Context">
+                    <Textarea
+                      rows={3}
+                      className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"
+                      value={det.extra?.patientHistory || ""}
+                      onChange={(e) => updateDet(det.id, { extra: { patientHistory: e.target.value } })}
+                    />
+                  </Field>
+                  <Field label="Notes">
+                    <Textarea
+                      rows={3}
+                      className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"
+                      value={det.extra?.notes || ""}
+                      onChange={(e) => updateDet(det.id, { extra: { notes: e.target.value } })}
+                    />
+                  </Field>
                 </div>
 
                 <Button disabled={det.loading} onClick={() => { setSelectedId(det.id); setStep(3) }} className="w-full">Search Database</Button>

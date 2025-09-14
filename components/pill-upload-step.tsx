@@ -21,7 +21,6 @@ type AnalyzeAttributes = {
   thickness_mm?: number
   front_imprint?: string
   back_imprint?: string
-  coating?: string
   scoring?: string
   notes?: string
 }
@@ -150,16 +149,9 @@ export function PillUploadStep({ onComplete }: PillUploadStepProps) {
       const mappedShape = mapValue(shapeMap, attrs.shape) || ""
       const mappedColor = mapValue(colorMap, attrs.color) || ""
       const sizeVal = closestSize(typeof attrs.size_mm === "number" ? attrs.size_mm : Number(attrs.size_mm))
-      const scored = attrs.scoring && typeof attrs.scoring === "string" && !["none","unclear"].includes(attrs.scoring.toLowerCase())
+  const scored = attrs.scoring && typeof attrs.scoring === "string" && !["none","unclear"].includes(attrs.scoring.toLowerCase())
 
-      // Dosage form heuristic mapping
-      let dosageForm = ""
-      const notesLc = (attrs.notes || "").toLowerCase()
-      const coatingLc = (attrs.coating || "").toLowerCase()
-      if (mappedShape === "Capsule") dosageForm = "Capsule"
-      else if (notesLc.includes("softgel")) dosageForm = "Softgel"
-      else if (coatingLc.includes("extended")) dosageForm = "Extended-release"
-      else if (coatingLc.includes("delayed")) dosageForm = "Delayed-release"
+  // No coating/dosage form
 
       setExtractedAttributes({
         front_imprint: attrs.front_imprint && attrs.front_imprint !== "unclear" ? attrs.front_imprint : "",
@@ -167,7 +159,6 @@ export function PillUploadStep({ onComplete }: PillUploadStepProps) {
         shape: mappedShape,
         color: mappedColor,
         size_mm: sizeVal,
-        coating: dosageForm,
         scoring: attrs.scoring,
         scored: !!scored,
         confidence: 0,

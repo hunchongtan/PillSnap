@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
+import { SCORING_OPTIONS, SHAPE_OPTIONS, COLOR_OPTIONS } from "@/constants/pill-options"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Search, AlertTriangle, Upload, Edit3, Loader2 } from "lucide-react"
@@ -23,48 +23,6 @@ interface PillAttributesStepProps {
   initialAttributes?: ExtractedPillAttributes
   showOcrAlternatives?: boolean // Added this property
 }
-
-const SHAPES = [
-  "Round",
-  "Oval",
-  "Capsule",
-  "Square",
-  "Rectangle",
-  "Triangle",
-  "Diamond",
-  "Pentagon",
-  "Hexagon",
-  "Octagon",
-  "Other",
-]
-
-const COLORS = [
-  "White",
-  "Yellow",
-  "Orange",
-  "Red",
-  "Pink",
-  "Purple",
-  "Blue",
-  "Green",
-  "Brown",
-  "Gray",
-  "Black",
-  "Clear",
-  "Multi-colored",
-]
-
-const DOSAGE_FORMS = [
-  "Tablet",
-  "Capsule",
-  "Caplet",
-  "Softgel",
-  "Chewable",
-  "Sublingual",
-  "Extended-release",
-  "Delayed-release",
-  "Other",
-]
 
 const SIZE_BINS = ["XS", "S", "M", "L"]
 const SIZES_MM = [5, 6, 7, 8, 9, 10, 12]
@@ -244,7 +202,7 @@ export function PillAttributesStep({
                       <SelectValue placeholder="Select shape" />
                     </SelectTrigger>
                     <SelectContent>
-                      {SHAPES.map((shape) => (
+                      {SHAPE_OPTIONS.map((shape) => (
                         <SelectItem key={shape} value={shape}>
                           {shape}
                         </SelectItem>
@@ -263,7 +221,7 @@ export function PillAttributesStep({
                       <SelectValue placeholder="Select color" />
                     </SelectTrigger>
                     <SelectContent>
-                      {COLORS.map((color) => (
+                      {COLOR_OPTIONS.map((color) => (
                         <SelectItem key={color} value={color}>
                           {color}
                         </SelectItem>
@@ -273,35 +231,24 @@ export function PillAttributesStep({
                 </div>
               </div>
 
-              {/* Scored Toggle and Dosage Form */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="scored"
-                    checked={attributes.scored || false}
-                    onCheckedChange={(checked) => setAttributes((prev) => ({ ...prev, scored: checked }))}
-                  />
-                  <Label htmlFor="scored">Scored (has a line for splitting)</Label>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Dosage Form</Label>
-                  <Select
-                    value={attributes.coating || ""}
-                    onValueChange={(value) => setAttributes((prev) => ({ ...prev, coating: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select dosage form" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DOSAGE_FORMS.map((form) => (
-                        <SelectItem key={form} value={form}>
-                          {form}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* Scoring Dropdown */}
+              <div className="space-y-2">
+                <Label>Scoring</Label>
+                <Select
+                  value={attributes.scoring || "none"}
+                  onValueChange={(value) => setAttributes((prev) => ({ ...prev, scoring: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select scoring" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SCORING_OPTIONS.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Size */}

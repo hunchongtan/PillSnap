@@ -1,0 +1,28 @@
+export const SHAPE_OPTIONS = [
+  "Barrel","Capsule/Oblong","Character-shape","Egg-shape","Eight-sided","Oval",
+  "Figure eight-shape","Five-sided","Four-sided","Gear-shape","Heart-shape",
+  "Kidney-shape","Rectangle","Round","Seven-sided","Six-sided","Three-sided","U-shape"
+] as const;
+
+export const COLOR_OPTIONS = [
+  "White","Beige","Black","Blue","Brown","Clear","Gold","Gray","Green","Maroon",
+  "Orange","Peach","Pink","Purple","Red","Tan","Yellow",
+  "Beige & Red","Black & Green","Black & Teal","Black & Yellow","Blue & Brown",
+  "Blue & Gray","Blue & Green","Blue & Orange","Blue & Peach","Blue & Pink",
+  "Blue & White","Blue & White Specks","Blue & Yellow","Brown & Clear",
+  "Brown & Orange","Brown & Peach","Brown & Red","Brown & White","Brown & Yellow",
+  "Clear & Green","Dark & Light Green","Gold & White","Gray & Peach","Gray & Pink",
+  "Gray & Red","Gray & White","Gray & Yellow","Green & Orange","Green & Peach",
+  "Green & Pink","Green & Purple","Green & Turquoise","Green & White","Green & Yellow",
+  "Lavender & White","Maroon & Pink","Orange & Turquoise","Orange & White","Orange & Yellow",
+  "Peach & Purple","Peach & Red","Peach & White","Pink & Purple","Pink & Red Specks",
+  "Pink & Turquoise","Pink & White","Pink & Yellow","Red & Turquoise","Red & White",
+  "Red & Yellow","Tan & White","Turquoise & White","Turquoise & Yellow","White & Blue Specks",
+  "White & Red Specks","White & Yellow","Yellow & Gray","Yellow & White"
+] as const;
+
+export type ShapeOption = typeof SHAPE_OPTIONS[number];
+export type ColorOption = typeof COLOR_OPTIONS[number];
+
+export const SCORING_OPTIONS = ["none","1 score","2 scores"] as const;
+export type ScoringOption = typeof SCORING_OPTIONS[number];

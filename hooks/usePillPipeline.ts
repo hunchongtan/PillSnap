@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+export type ExtraInfo = {
+  patientHistory: string;
+  possibleName: string;
+  notes: string;
+};
+
 export type Det = {
   id: string;
   conf: number;
@@ -14,10 +20,10 @@ export type Det = {
     thickness_mm: number;
     front_imprint: string;
     back_imprint: string;
-    coating: string;
     scoring: string;
     notes: string;
   };
+  extra?: ExtraInfo;
   loading: boolean;
   error?: string;
 };
@@ -50,7 +56,6 @@ type AnalyzeAttributes = {
   thickness_mm?: number;
   front_imprint?: string;
   back_imprint?: string;
-  coating?: string;
   scoring?: string;
   notes?: string;
 };
@@ -73,7 +78,13 @@ export function usePillPipeline() {
       try {
         const parsed = JSON.parse(saved) as { dets: Det[] };
         if (Array.isArray(parsed.dets))
-          setDets(parsed.dets.map((d) => ({ ...d, loading: false })));
+          setDets(
+            parsed.dets.map((d) => ({
+              ...d,
+              loading: false,
+              extra: d.extra || { patientHistory: "", possibleName: "", notes: "" },
+            }))
+          );
       } catch {}
     }
   }, []);
@@ -132,6 +143,7 @@ export function usePillPipeline() {
           class: p.class,
           box: { x, y, width: w, height: h },
           loading: true,
+          extra: { patientHistory: "", possibleName: "", notes: "" },
         };
       });
       setDets(mapped);
@@ -198,7 +210,6 @@ export function usePillPipeline() {
                 a.back_imprint && a.back_imprint !== "unclear"
                   ? a.back_imprint
                   : "",
-              coating: a.coating || "",
               scoring: a.scoring || "",
               notes: a.notes || "",
             };
@@ -230,5 +241,25 @@ export function usePillPipeline() {
     }
   }, []);
 
-  return { dets, processing, error, run, setDets };
+  type DetPatch = Partial<Omit<Det, "extra">> & { extra?: Partial<ExtraInfo> };
+  const updateDet = useCallback(
+    (id: string, patch: DetPatch) => {
+      setDets((prev) =>
+        prev.map((d) =>
+          d.id === id
+            ? {
+                ...d,
+                ...patch,
+                extra: patch.extra
+                  ? { ...(d.extra || { patientHistory: "", possibleName: "", notes: "" }), ...patch.extra }
+                  : d.extra,
+              }
+            : d
+        )
+      );
+    },
+    []
+  );
+
+  return { dets, processing, error, run, setDets, updateDet };
 }

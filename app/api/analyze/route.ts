@@ -3,6 +3,7 @@ import { env } from '@/lib/env'
 import { type NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { z } from 'zod'
+import { SHAPE_OPTIONS, COLOR_OPTIONS, SCORING_OPTIONS } from "@/constants/pill-options";
 
 export const runtime = 'nodejs'
 
@@ -18,17 +19,16 @@ function isErrorWithProps(
 // === Schema: attributes-only ===
 const PillAttributesSchema = z
   .object({
-    shape: z.string().default('unclear'),
-    color: z.string().default('unclear'),
+    shape: z.enum(SHAPE_OPTIONS).or(z.literal("")).default(""),
+    color: z.enum(COLOR_OPTIONS).or(z.literal("")).default(""),
     size_mm: z.coerce.number().min(0).default(0),
     thickness_mm: z.coerce.number().min(0).default(0),
-    front_imprint: z.string().default('unclear'),
-    back_imprint: z.string().default('unclear'),
-    coating: z.string().default('unclear'), // matte/glossy/film-coated/unclear
-    scoring: z.string().default('unclear'), // "none", "1 score", "2 scores", or "unclear"
-    notes: z.string().default(''), // free text like "partial 'M' visible"
+    front_imprint: z.string().default(""),
+    back_imprint: z.string().default(""),
+    scoring: z.enum(SCORING_OPTIONS).default("none"),
+    notes: z.string().default(""),
   })
-  .strict()
+  .strict();
 
 const OutputSchema = z
   .object({
@@ -38,32 +38,31 @@ const OutputSchema = z
 
 // === Prompt ===
 function buildPrompt() {
+  const allowedShapes = SHAPE_OPTIONS.join(" | ");
+  const allowedColors = COLOR_OPTIONS.join(" | ");
+  const allowedScoring = SCORING_OPTIONS.join(" | ");
   return `
-Extract ONLY visible attributes of the clearest pill in the image. If unclear, write "unclear".
-If a numeric value is uncertain, use a reasonable mm estimate or 0.
+Return a single JSON object exactly like this (valid JSON, no extra keys):
 
-You MUST return a single JSON object with this exact shape (valid JSON, no comments, no extra keys):
 {
   "attributes": {
-    "shape": string,
-    "color": string,
+    "shape": string,   // MUST be one of: ${allowedShapes} (or "" if unknown)
+    "color": string,   // MUST be one of: ${allowedColors} (or "" if unknown)
     "size_mm": number,
     "thickness_mm": number,
     "front_imprint": string,
     "back_imprint": string,
-    "coating": string,
-    "scoring": string,
+    "scoring": "${allowedScoring}",  // MUST be one of these values
     "notes": string
   }
 }
 
-Guidelines:
-- size_mm = longest dimension; thickness_mm = height.
-- Imprint can be partial (e.g., "M", "PA"); if none, "unclear".
-- coating: matte/glossy/film-coated/unclear.
-- scoring: "none", "1 score", "2 scores", or "unclear".
-- Do NOT identify the medicine. Do NOT include extra fields. Output JSON only.
-`.trim()
+Rules:
+- Choose shape/color ONLY from the lists; if unsure, use empty string "".
+- Scoring MUST be exactly one of ${allowedScoring}; use "none" when unclear or absent.
+- Do not identify the medicine; extract visible attributes only.
+- Output JSON only.
+`.trim();
 }
 
 export async function POST(request: NextRequest) {

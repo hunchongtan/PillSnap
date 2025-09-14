@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Edit3, Search, RotateCcw } from "lucide-react"
 import type { ExtractedPillAttributes } from "@/lib/openai-vision"
+import { SHAPE_OPTIONS as CAN_SHAPES, COLOR_OPTIONS as CAN_COLORS, SCORING_OPTIONS as CAN_SCORING } from "@/constants/pill-options"
 
 interface PillAttributeEditorProps {
   initialAttributes: ExtractedPillAttributes
@@ -17,27 +18,8 @@ interface PillAttributeEditorProps {
   isSearching?: boolean
 }
 
-const SHAPE_OPTIONS = ["Round", "Oval", "Capsule", "Square", "Diamond", "Triangle", "Rectangular", "Other"]
-
-const COLOR_OPTIONS = [
-  "White",
-  "Yellow",
-  "Orange",
-  "Red",
-  "Pink",
-  "Purple",
-  "Blue",
-  "Green",
-  "Brown",
-  "Gray",
-  "Black",
-  "Clear",
-  "Multi-colored",
-]
-
-const COATING_OPTIONS = ["Uncoated", "Film-coated", "Sugar-coated", "Enteric-coated", "Unknown"]
-
-const SCORING_OPTIONS = ["None", "Single score", "Cross score", "Multiple scores", "Unknown"]
+const SHAPE_OPTIONS = CAN_SHAPES
+const COLOR_OPTIONS = CAN_COLORS
 
 export function PillAttributeEditor({ initialAttributes, onSearch, isSearching = false }: PillAttributeEditorProps) {
   const [attributes, setAttributes] = useState<ExtractedPillAttributes>(initialAttributes)
@@ -128,24 +110,6 @@ export function PillAttributeEditor({ initialAttributes, onSearch, isSearching =
               className="bg-input border-border"
             />
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="coating" className="text-card-foreground">
-              Coating
-            </Label>
-            <Select value={attributes.coating || ""} onValueChange={(value) => updateAttribute("coating", value)}>
-              <SelectTrigger className="bg-input border-border">
-                <SelectValue placeholder="Select coating" />
-              </SelectTrigger>
-              <SelectContent>
-                {COATING_OPTIONS.map((coating) => (
-                  <SelectItem key={coating} value={coating}>
-                    {coating}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
 
         {/* Imprints */}
@@ -182,12 +146,12 @@ export function PillAttributeEditor({ initialAttributes, onSearch, isSearching =
           <Label htmlFor="scoring" className="text-card-foreground">
             Scoring
           </Label>
-          <Select value={attributes.scoring || ""} onValueChange={(value) => updateAttribute("scoring", value)}>
+          <Select value={attributes.scoring || "none"} onValueChange={(value) => updateAttribute("scoring", value)}>
             <SelectTrigger className="bg-input border-border">
               <SelectValue placeholder="Select scoring type" />
             </SelectTrigger>
             <SelectContent>
-              {SCORING_OPTIONS.map((scoring) => (
+              {CAN_SCORING.map((scoring) => (
                 <SelectItem key={scoring} value={scoring}>
                   {scoring}
                 </SelectItem>
@@ -218,31 +182,13 @@ export function PillAttributeEditor({ initialAttributes, onSearch, isSearching =
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-4">
-          <Button
-            onClick={handleSearch}
-            disabled={isSearching}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1"
-          >
-            {isSearching ? (
-              <>
-                <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                Searching...
-              </>
-            ) : (
-              <>
-                <Search className="w-4 h-4 mr-2" />
-                Search Database
-              </>
-            )}
+        <div className="flex items-center gap-4">
+          <Button onClick={handleSearch} disabled={isSearching}>
+            <Search className="w-4 h-4 mr-2" /> Search
           </Button>
-
-          {isEditing && (
-            <Button onClick={handleReset} variant="outline" className="border-border bg-transparent">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reset
-            </Button>
-          )}
+          <Button variant="outline" onClick={handleReset} disabled={isSearching}>
+            <RotateCcw className="w-4 h-4 mr-2" /> Reset
+          </Button>
         </div>
       </CardContent>
     </Card>

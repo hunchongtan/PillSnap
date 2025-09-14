@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Info, Shield, Zap, Database, Eye, Search, AlertTriangle } from "lucide-react"
+import { Info, Shield, Zap, Database, Eye, Search, AlertTriangle, Edit3 } from "lucide-react"
 
 export function Navigation() {
   return (
@@ -31,7 +31,7 @@ export function Navigation() {
               <img src="/icon.svg" alt="PillSnap" className="h-20 w-20" />
               <div>
                 <span className="text-2xl font-bold text-foreground">PillSnap</span>
-                <div className="text-sm text-muted-foreground">Pill Identifier</div>
+                <div className="text-sm text-muted-foreground">Pill Identification in a Snap</div>
               </div>
             </div>
 
@@ -62,20 +62,25 @@ function AboutDialog() {
           </DialogTitle>
           <DialogDescription className="text-left space-y-4 pt-4">
             <p>
-              PillSnap helps users identify medications from images. The system uses computer vision to analyze pill
-              characteristics.
+              PillSnap helps you identify medications by either typing a pill name or imprint in the search bar, or by
+              uploading/taking a photo. The app extracts key features and searches your pill image library for likely matches.
             </p>
 
             <div className="space-y-3">
               <h4 className="font-semibold text-foreground">Key Features:</h4>
               <div className="grid grid-cols-1 gap-3">
                 <div className="flex items-start gap-3">
+                  <Edit3 className="w-4 h-4 text-secondary mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-foreground">Manual Input</p>
+                    <p className="text-sm text-muted-foreground">Type a pill name or imprint to search directly</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
                   <Eye className="w-4 h-4 text-secondary mt-1 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-foreground">AI Vision Analysis</p>
-                    <p className="text-sm text-muted-foreground">
-                      Advanced image recognition to extract pill attributes
-                    </p>
+                    <p className="font-medium text-foreground">Automatic Photo Analysis</p>
+                    <p className="text-sm text-muted-foreground">Extracts visible attributes like shape, color, imprints, and scoring</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -127,9 +132,9 @@ function HowItWorksDialog() {
                   <span className="text-secondary-foreground text-sm font-bold">1</span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground">Image Upload & Processing</h4>
+                  <h4 className="font-semibold text-foreground">Start Your Search</h4>
                   <p className="text-sm text-muted-foreground">
-                    Upload a clear photo of your pill. Our system processes the image and prepares it for analysis.
+                    Type a pill name or imprint in the search bar, or click the camera button to upload/take a photo.
                   </p>
                 </div>
               </div>
@@ -139,9 +144,9 @@ function HowItWorksDialog() {
                   <span className="text-secondary-foreground text-sm font-bold">2</span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground">Automated Detection</h4>
+                  <h4 className="font-semibold text-foreground">Segment Pills</h4>
                   <p className="text-sm text-muted-foreground">
-                    Roboflow detects and segments the pill boundaries, isolating the medication from the background.
+                    If your photo contains multiple pills, the app automatically separates them so you can review each one.
                   </p>
                 </div>
               </div>
@@ -151,10 +156,9 @@ function HowItWorksDialog() {
                   <span className="text-secondary-foreground text-sm font-bold">3</span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground">Attribute Extraction</h4>
+                  <h4 className="font-semibold text-foreground">Automatic Description</h4>
                   <p className="text-sm text-muted-foreground">
-                    OpenAI Vision analyzes the pill to extract key characteristics: shape, color, size, imprints, and
-                    coating.
+                    For each pill, the system produces a short description of visible features (e.g., “white, round, scored line, imprint B10”).
                   </p>
                 </div>
               </div>
@@ -164,9 +168,9 @@ function HowItWorksDialog() {
                   <span className="text-secondary-foreground text-sm font-bold">4</span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground">Review & Refine</h4>
+                  <h4 className="font-semibold text-foreground">Review and Improve</h4>
                   <p className="text-sm text-muted-foreground">
-                    Review the extracted attributes and make corrections if needed using our intuitive editor interface.
+                    Check these details and make edits if needed (for example, if an imprint was misread). You can also add optional context like patient history or a possible pill name.
                   </p>
                 </div>
               </div>
@@ -176,10 +180,9 @@ function HowItWorksDialog() {
                   <span className="text-secondary-foreground text-sm font-bold">5</span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground">Database Search</h4>
+                  <h4 className="font-semibold text-foreground">Search Your Library</h4>
                   <p className="text-sm text-muted-foreground">
-                    Our system searches the comprehensive medication database using the refined attributes to find
-                    matches.
+                    The app uses the confirmed features to search your own pill image library and find likely matches.
                   </p>
                 </div>
               </div>
@@ -189,23 +192,11 @@ function HowItWorksDialog() {
                   <span className="text-secondary-foreground text-sm font-bold">6</span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground">Results & Information</h4>
+                  <h4 className="font-semibold text-foreground">View Results</h4>
                   <p className="text-sm text-muted-foreground">
-                    Get detailed information about potential matches, including medication names, manufacturers, and
-                    confidence scores.
+                    See top matches ranked by how closely they match the attributes you provided.
                   </p>
                 </div>
-              </div>
-            </div>
-
-            <div className="bg-accent/10 p-4 rounded-lg border border-accent/20">
-              <h4 className="font-semibold text-foreground mb-2">Technology Stack</h4>
-              <div className="flex flex-wrap gap-2">
-                <span className="px-2 py-1 text-xs border rounded">Roboflow</span>
-                <span className="px-2 py-1 text-xs border rounded">OpenAI Vision</span>
-                <span className="px-2 py-1 text-xs border rounded">Supabase</span>
-                <span className="px-2 py-1 text-xs border rounded">Next.js</span>
-                <span className="px-2 py-1 text-xs border rounded">TypeScript</span>
               </div>
             </div>
           </DialogDescription>

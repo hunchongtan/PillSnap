@@ -15,7 +15,6 @@ export function PillManualStep({ onComplete }: PillManualStepProps) {
     back_imprint: "",
     size_mm: 0,
     scored: false,
-    coating: "",
     confidence: 0,
     reasoning: "",
   }
