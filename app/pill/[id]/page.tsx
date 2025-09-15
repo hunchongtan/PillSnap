@@ -8,13 +8,14 @@ import { ArrowLeft, AlertTriangle, Info } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
-export default async function PillDetailPage({ params }: any) {
+export default async function PillDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createServerClient()
+  const { id } = await params
 
   const { data: pill, error } = await supabase
     .from("pills")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (error || !pill) {
