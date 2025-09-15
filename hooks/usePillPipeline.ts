@@ -18,8 +18,7 @@ export type Det = {
     color: string
     size_mm: number
     thickness_mm: number
-    front_imprint: string
-    back_imprint: string
+    imprint: string
     scoring: string
     notes: string
   }
@@ -54,8 +53,7 @@ type AnalyzeAttributes = {
   color?: string
   size_mm?: number
   thickness_mm?: number
-  front_imprint?: string
-  back_imprint?: string
+  imprint?: string
   scoring?: string
   notes?: string
 }
@@ -197,9 +195,7 @@ export function usePillPipeline() {
               color: a.color || '',
               size_mm: typeof a.size_mm === 'number' ? a.size_mm : 0,
               thickness_mm: typeof a.thickness_mm === 'number' ? a.thickness_mm : 0,
-              front_imprint:
-                a.front_imprint && a.front_imprint !== 'unclear' ? a.front_imprint : '',
-              back_imprint: a.back_imprint && a.back_imprint !== 'unclear' ? a.back_imprint : '',
+              imprint: a.imprint && a.imprint !== 'unclear' ? a.imprint : '',
               scoring: a.scoring || '',
               notes: a.notes || '',
             }

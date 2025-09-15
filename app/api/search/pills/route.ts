@@ -7,8 +7,7 @@ export const runtime = 'nodejs'
 const AttributesSchema = z.object({
   shape: z.string().optional(),
   color: z.string().optional(),
-  front_imprint: z.string().optional(),
-  back_imprint: z.string().optional(),
+  imprint: z.string().optional(),
   size_mm: z.number().optional(),
 })
 
@@ -29,8 +28,7 @@ export async function POST(request: NextRequest) {
     const searchResults = await searchPills({
       shape: attributes.shape,
       color: attributes.color,
-      front_imprint: attributes.front_imprint,
-      back_imprint: attributes.back_imprint,
+      imprint: attributes.imprint,
       size_mm: attributes.size_mm,
     })
 
@@ -41,13 +39,11 @@ export async function POST(request: NextRequest) {
     const searchRecord = await saveUserSearch({
       detected_shape: attributes.shape,
       detected_color: attributes.color,
-      detected_front_imprint: attributes.front_imprint,
-      detected_back_imprint: attributes.back_imprint,
+      detected_imprint: attributes.imprint,
       detected_size_mm: attributes.size_mm,
       user_confirmed_shape: attributes.shape,
       user_confirmed_color: attributes.color,
-      user_confirmed_front_imprint: attributes.front_imprint,
-      user_confirmed_back_imprint: attributes.back_imprint,
+      user_confirmed_imprint: attributes.imprint,
       matched_pill_ids: searchResults.map((pill) => pill.id),
       confidence_score: confidenceScore,
       session_id: sessionId || generateSessionId(),
@@ -69,8 +65,7 @@ export async function POST(request: NextRequest) {
 type MinimalAttrs = {
   shape?: string
   color?: string
-  front_imprint?: string
-  back_imprint?: string
+  imprint?: string
   size_mm?: number
 }
 
@@ -83,8 +78,7 @@ function calculateSearchConfidence(attributes: MinimalAttrs, results: any[]): nu
   // Add confidence for each matching attribute
   if (attributes.shape) confidence += 0.2
   if (attributes.color) confidence += 0.2
-  if (attributes.front_imprint) confidence += 0.15
-  if (attributes.back_imprint) confidence += 0.1
+  if (attributes.imprint) confidence += 0.25
   if (attributes.size_mm) confidence += 0.05
 
   // Reduce confidence if too many results (less specific)

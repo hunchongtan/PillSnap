@@ -46,3 +46,24 @@ Try it live here: [pill-snap.vercel.app](https://pill-snap.vercel.app/)
 ## Environment
 
 Copy `.env.example` to `.env.local` and fill the values. Server variables are validated at runtime via Zod in `lib/env.ts`.
+
+## Camera Capture
+
+You can now capture pill photos directly from your device:
+
+- "Take Photo" opens a webcam / device camera dialog implemented via `getUserMedia`.
+- Default camera selection: rear ("environment") on mobile, front ("user") on desktop; a Flip button lets you toggle.
+- Captured frames are compressed (`canvas.toDataURL('image/jpeg', 0.92)`) and limited to ~10MB before being sent through the same pipeline as standard uploads ( `/api/segment` → crop → `/api/analyze` / attributes ).
+- Permissions: the browser will prompt for camera access. If denied, an inline message appears and you can still use file upload.
+
+### Requirements
+
+- Must be served over `https://` or `http://localhost` for camera access.
+- Environment variables: `ROBOFLOW_MODEL_URL` and `ROBOFLOW_API_KEY` must be set (already required for segmentation) and are reused for camera captures.
+
+### Accessibility & Behavior
+
+- Dialog is keyboard navigable; `Escape` closes it.
+- Video uses `playsInline` to avoid iOS full-screen takeover.
+- A hidden `<canvas>` element performs the capture/compression.
+

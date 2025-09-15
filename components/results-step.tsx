@@ -12,12 +12,11 @@ export function ResultsStep({ pill, allPills, onBack, onSelectPill }: { pill: De
   const prevId = idx > 0 ? ids[idx-1] : null
   const nextId = idx < ids.length - 1 ? ids[idx+1] : null
 
-  const front = pill.attributes?.front_imprint || ""
-  const back = pill.attributes?.back_imprint || ""
+  const imprint = pill.attributes?.imprint || ""
   const shape = pill.attributes?.shape || ""
   const color = pill.attributes?.color || ""
   const size_mm = pill.attributes?.size_mm || 0
-  const scored = !!(pill.attributes?.scoring && !["none","unclear"].includes(pill.attributes.scoring.toLowerCase()))
+  const scoring = pill.attributes?.scoring || "none"
   const extra = pill.extra || { patientHistory: "", possibleName: "", notes: "" }
   const hasExtra = !!(extra.patientHistory || extra.possibleName || extra.notes)
 
@@ -42,18 +41,16 @@ export function ResultsStep({ pill, allPills, onBack, onSelectPill }: { pill: De
             {pill.previewUrl ? <img src={pill.previewUrl} alt="Pill" className="w-full h-full object-contain"/> : <div className="w-full h-full"/>}
           </div>
           <div className="flex-1 grid grid-cols-2 gap-2 text-sm">
-            <div className="text-muted-foreground">Front Imprint</div>
-            <div className="font-medium">{front}</div>
-            <div className="text-muted-foreground">Back Imprint</div>
-            <div className="font-medium">{back}</div>
+            <div className="text-muted-foreground">Imprint</div>
+            <div className="font-medium">{imprint}</div>
             <div className="text-muted-foreground">Shape</div>
             <div className="font-medium">{shape}</div>
             <div className="text-muted-foreground">Color</div>
             <div className="font-medium">{color}</div>
             <div className="text-muted-foreground">Size</div>
             <div className="font-medium">{size_mm ? `${size_mm} mm` : ""}</div>
-            <div className="text-muted-foreground">Scored</div>
-            <div className="font-medium">{scored ? "Yes" : "No"}</div>
+            <div className="text-muted-foreground">Scoring</div>
+            <div className="font-medium">{scoring || "none"}</div>
           </div>
         </CardContent>
       </Card>
@@ -85,20 +82,19 @@ export function ResultsStep({ pill, allPills, onBack, onSelectPill }: { pill: De
       )}
 
       {/* Search integration */}
-      <ResultsSearch attributes={{ front, back, shape, color, size_mm, scored }} />
+  <ResultsSearch attributes={{ imprint, shape, color, size_mm, scoring }} />
     </div>
   )
 }
 
-function ResultsSearch({ attributes }: { attributes: { front: string; back: string; shape: string; color: string; size_mm: number; scored: boolean } }) {
-  const { front, back, shape, color, size_mm, scored } = attributes
+function ResultsSearch({ attributes }: { attributes: { imprint: string; shape: string; color: string; size_mm: number; scoring: string } }) {
+  const { imprint, shape, color, size_mm } = attributes
   const payload: any = {
     attributes: {
-      imprint: [front, back].filter(Boolean).join(" ") || undefined,
+      imprint: imprint || undefined,
       shape: shape || undefined,
       color: color || undefined,
       size_mm: size_mm || undefined,
-      scored: scored || undefined,
     },
     sessionId: `multi_${new Date().toISOString()}`,
   }
@@ -134,7 +130,7 @@ function ResultsSearch({ attributes }: { attributes: { front: string; back: stri
     }
     run()
     return () => { mounted = false }
-  }, [front, back, shape, color, size_mm, scored])
+  }, [imprint, shape, color, size_mm])
 
   return (
     <div className="space-y-6">

@@ -5,7 +5,8 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { SHAPE_OPTIONS, COLOR_OPTIONS } from "@/constants/pill-options"
+import { SHAPE_OPTIONS, COLOR_SINGLE_TONE, COLOR_TWO_TONE } from "@/constants/pill-options"
+import { sanitizeFilterValue } from "@/lib/filter-utils"
 import { Card, CardContent } from "@/components/ui/card"
 import { Camera, Search } from "lucide-react"
 
@@ -30,9 +31,9 @@ export function PillSearchBar({ onSearch, onCameraClick, initialValues }: PillSe
 
   const handleSearch = () => {
     onSearch({
-      imprint: imprint || undefined,
-      shape: shape !== "any" ? shape : undefined,
-      color: color !== "any" ? color : undefined,
+      imprint: imprint.trim() || undefined,
+      shape: sanitizeFilterValue(shape),
+      color: sanitizeFilterValue(color),
     })
   }
 
@@ -42,8 +43,10 @@ export function PillSearchBar({ onSearch, onCameraClick, initialValues }: PillSe
     }
   }
 
+  const fieldBaseClasses = "bg-white text-black placeholder:text-gray-500 border border-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-0 dark:bg-white dark:text-black dark:placeholder:text-gray-500 dark:border-gray-300"
+
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-white border-gray-200 dark:bg-white dark:border-gray-300 shadow-sm">
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search Input */}
@@ -53,13 +56,13 @@ export function PillSearchBar({ onSearch, onCameraClick, initialValues }: PillSe
               value={imprint}
               onChange={(e) => setImprint(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="text-base"
+              className={`text-base ${fieldBaseClasses}`}
             />
           </div>
 
           {/* Shape Dropdown */}
           <Select value={shape} onValueChange={setShape}>
-            <SelectTrigger className="w-full md:w-40">
+            <SelectTrigger className={`w-full md:w-40 ${fieldBaseClasses}`}>
               <SelectValue placeholder="Shape" />
             </SelectTrigger>
             <SelectContent>
@@ -72,14 +75,15 @@ export function PillSearchBar({ onSearch, onCameraClick, initialValues }: PillSe
 
           {/* Color Dropdown */}
           <Select value={color} onValueChange={setColor}>
-            <SelectTrigger className="w-full md:w-40">
+            <SelectTrigger className={`w-full md:w-52 ${fieldBaseClasses}`}>
               <SelectValue placeholder="Color" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="any">Any Color</SelectItem>
-              {COLOR_OPTIONS.map((c) => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
-              ))}
+              <SelectItem value="__single" disabled>Single Tones</SelectItem>
+              {COLOR_SINGLE_TONE.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              <SelectItem value="__two" disabled>Two Tones</SelectItem>
+              {COLOR_TWO_TONE.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
 

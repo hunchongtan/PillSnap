@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Upload, Camera, X, CheckCircle, Eye } from "lucide-react"
+import { WebcamCapture } from "./webcam-capture"
+import { dataURLtoFile } from "@/lib/data-url"
 import Image from "next/image"
 import { segmentPillImage, type ProcessedPillImage } from "@/lib/roboflow"
 import { extractPillAttributes, type VisionAnalysisResult, type ExtractedPillAttributes } from "@/lib/openai-vision"
@@ -36,6 +38,8 @@ export function PillUpload() {
   const [isSearching, setIsSearching] = useState(false)
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null)
   const [sessionId] = useState(() => `session_${new Date().toISOString()}_${Math.random().toString(36).substr(2, 9)}`)
+  const [showWebcam, setShowWebcam] = useState(false)
+  const [capturedPreview, setCapturedPreview] = useState<string | null>(null)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -65,6 +69,18 @@ export function PillUpload() {
     },
     multiple: false,
   })
+
+
+  const handleCapture = (dataUrl: string) => {
+    setShowWebcam(false)
+    setCapturedPreview(dataUrl)
+    const file = dataURLtoFile(dataUrl)
+    setUploadedFile({ file, preview: dataUrl })
+    // Optionally auto-start analysis
+    setTimeout(() => {
+      handleAnalyze().catch(()=>{})
+    }, 50)
+  }
 
   const handleRemoveFile = () => {
     if (uploadedFile) {
@@ -185,9 +201,14 @@ export function PillUpload() {
                     {isDragActive ? "Drop your image here" : "Upload pill image"}
                   </h3>
                   <p className="text-muted-foreground mb-4">Drag and drop an image, or click to browse</p>
-                  <Button variant="secondary" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
-                    Choose File
-                  </Button>
+                  <div className="flex gap-3 justify-center">
+                    <Button variant="secondary" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
+                      Choose File
+                    </Button>
+                    <Button type="button" variant="outline" onClick={(e) => { e.stopPropagation(); setShowWebcam(true) }}>
+                      Take Photo
+                    </Button>
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground">Supports JPG, PNG, WebP • Max 10MB</p>
               </div>
@@ -274,10 +295,10 @@ export function PillUpload() {
                       </div>
                     </div>
 
-                    {visionResult.attributes.front_imprint && (
+                    {visionResult.attributes.imprint && (
                       <div className="text-sm">
                         <span className="font-medium text-card-foreground">Imprint: </span>
-                        <span className="text-muted-foreground">{visionResult.attributes.front_imprint}</span>
+                        <span className="text-muted-foreground">{visionResult.attributes.imprint}</span>
                       </div>
                     )}
                   </div>
@@ -304,6 +325,7 @@ export function PillUpload() {
       )}
 
       <PillSearchResults searchResult={searchResult} isLoading={isSearching} error={error} />
+      <WebcamCapture open={showWebcam} onClose={() => setShowWebcam(false)} onCapture={handleCapture} />
     </div>
   )
 }

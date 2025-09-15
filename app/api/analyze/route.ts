@@ -22,11 +22,8 @@ const PillAttributesSchema = z
     shape: z.enum(SHAPE_OPTIONS).or(z.literal('')).default(''),
     color: z.enum(COLOR_OPTIONS).or(z.literal('')).default(''),
     size_mm: z.coerce.number().min(0).default(0),
-    thickness_mm: z.coerce.number().min(0).default(0),
-    front_imprint: z.string().default(''),
-    back_imprint: z.string().default(''),
+    imprint: z.string().default(''),
     scoring: z.enum(SCORING_OPTIONS).default('none'),
-    notes: z.string().default(''),
   })
   .strict()
 
@@ -49,11 +46,8 @@ Return a single JSON object exactly like this (valid JSON, no extra keys):
     "shape": string,   // MUST be one of: ${allowedShapes} (or "" if unknown)
     "color": string,   // MUST be one of: ${allowedColors} (or "" if unknown)
     "size_mm": number,
-    "thickness_mm": number,
-    "front_imprint": string,
-    "back_imprint": string,
+    "imprint": string,
     "scoring": "${allowedScoring}",  // MUST be one of these values
-    "notes": string
   }
 }
 

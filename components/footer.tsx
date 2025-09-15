@@ -19,7 +19,7 @@ export function Footer() {
                 Contribute pill images
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Contribute Pill Images</DialogTitle>
               </DialogHeader>

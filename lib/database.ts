@@ -5,19 +5,15 @@ export interface Pill {
   created_at: string
   updated_at: string
   name?: string
-  generic_name?: string
   brand_name?: string
-  ndc_number?: string
   shape?: string
   color?: string
   size_mm?: number
-  thickness_mm?: number
-  front_imprint?: string
-  back_imprint?: string
-  drug_class?: string
-  schedule?: string
+  imprint?: string
   scoring?: string
   manufacturer?: string
+  image_url?: string
+  back_image_url?: string
 }
 
 export interface UserSearch {
@@ -27,13 +23,11 @@ export interface UserSearch {
   processed_image_url?: string
   detected_shape?: string
   detected_color?: string
-  detected_front_imprint?: string
-  detected_back_imprint?: string
+  detected_imprint?: string
   detected_size_mm?: number
   user_confirmed_shape?: string
   user_confirmed_color?: string
-  user_confirmed_front_imprint?: string
-  user_confirmed_back_imprint?: string
+  user_confirmed_imprint?: string
   matched_pill_ids?: string[]
   confidence_score?: number
   session_id?: string
@@ -43,8 +37,7 @@ export interface UserSearch {
 export async function searchPills(attributes: {
   shape?: string
   color?: string
-  front_imprint?: string
-  back_imprint?: string
+  imprint?: string
   size_mm?: number
 }) {
   const supabase = await createClient()
@@ -58,11 +51,8 @@ export async function searchPills(attributes: {
   if (attributes.color) {
     query = query.ilike('color', `%${attributes.color}%`)
   }
-  if (attributes.front_imprint) {
-    query = query.ilike('front_imprint', `%${attributes.front_imprint}%`)
-  }
-  if (attributes.back_imprint) {
-    query = query.ilike('back_imprint', `%${attributes.back_imprint}%`)
+  if (attributes.imprint) {
+    query = query.ilike('imprint', `%${attributes.imprint}%`)
   }
   if (attributes.size_mm) {
     // Allow for 2mm tolerance in size matching

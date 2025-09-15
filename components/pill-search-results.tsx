@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Pill, Search, ExternalLink, AlertTriangle, CheckCircle2 } from "lucide-react"
+import { Pill, Search, ExternalLink, AlertTriangle, CheckCircle2, Image as ImageIcon } from "lucide-react"
 import type { Pill as PillType } from "@/lib/database"
 
 interface SearchResult {
@@ -105,21 +105,18 @@ export function PillSearchResults({ searchResult, isLoading = false, error }: Pi
           <Card key={pill.id} className="bg-card border-border hover:border-accent transition-colors">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Pill className="w-8 h-8 text-muted-foreground" />
+                <div className="w-24 h-16 bg-muted rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {pill.image_url ? (
+                    <img src={pill.image_url} alt={`${pill.name || pill.brand_name || "Pill"} front`} className="w-full h-full object-cover" />
+                  ) : (
+                    <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                  )}
                 </div>
 
                 <div className="flex-1 space-y-3">
                   <div>
-                    <h3 className="text-lg font-semibold text-card-foreground">
-                      {pill.name || pill.generic_name || "Unknown Medication"}
-                    </h3>
-                    {pill.brand_name && pill.brand_name !== pill.name && (
-                      <p className="text-sm text-muted-foreground">Brand: {pill.brand_name}</p>
-                    )}
-                    {pill.generic_name && pill.generic_name !== pill.name && (
-                      <p className="text-sm text-muted-foreground">Generic: {pill.generic_name}</p>
-                    )}
+                    <h3 className="text-lg font-semibold text-card-foreground">{pill.name || pill.brand_name || "Unknown Medication"}</h3>
+                    {pill.brand_name && pill.name && <p className="text-sm text-muted-foreground">Brand: {pill.brand_name}</p>}
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
@@ -136,18 +133,15 @@ export function PillSearchResults({ searchResult, isLoading = false, error }: Pi
                       <p className="text-muted-foreground">{pill.size_mm ? `${pill.size_mm}mm` : "Unknown"}</p>
                     </div>
                     <div>
-                      <span className="font-medium text-card-foreground">Class:</span>
-                      <p className="text-muted-foreground">{pill.drug_class || "Unknown"}</p>
+                      <span className="font-medium text-card-foreground">Scoring:</span>
+                      <p className="text-muted-foreground">{pill.scoring || "Unknown"}</p>
                     </div>
                   </div>
 
-                  {(pill.front_imprint || pill.back_imprint) && (
+                  {pill.imprint && (
                     <div className="space-y-1">
-                      <span className="font-medium text-card-foreground text-sm">Imprints:</span>
-                      <div className="flex gap-4 text-sm text-muted-foreground">
-                        {pill.front_imprint && <span>Front: {pill.front_imprint}</span>}
-                        {pill.back_imprint && <span>Back: {pill.back_imprint}</span>}
-                      </div>
+                      <span className="font-medium text-card-foreground text-sm">Imprint:</span>
+                      <div className="text-sm text-muted-foreground">{pill.imprint}</div>
                     </div>
                   )}
 

@@ -15,7 +15,9 @@ import { Switch } from "@/components/ui/switch"
 import { ResultsStep } from "./results-step"
 import { Textarea } from "@/components/ui/textarea"
 import { Pill as PillIcon } from "lucide-react"
-import { SHAPE_OPTIONS, COLOR_OPTIONS, SCORING_OPTIONS } from "@/constants/pill-options"
+import { WebcamCapture } from "./webcam-capture"
+import { SHAPE_OPTIONS, COLOR_SINGLE_TONE, COLOR_TWO_TONE, SCORING_OPTIONS } from "@/constants/pill-options"
+import { dataURLtoFile } from '@/lib/data-url'
 
 const SIZES_MM = [5,6,7,8,9,10,12]
 const shapeMap: Record<string,string> = { round:"Round", circle:"Round", oval:"Oval", oblong:"Oval", capsule:"Capsule", triangle:"Triangle", square:"Square", pentagon:"Pentagon", hexagon:"Hexagon", diamond:"Diamond", heart:"Heart", tear:"Teardrop", teardrop:"Teardrop" }
@@ -23,30 +25,42 @@ const colorMap: Record<string,string> = { white:"White","off-white":"White", bei
 const mapValue = (map:Record<string,string>, v?:string) => v ? map[v.toLowerCase().trim()] : undefined
 const closestSize = (target?:number, options:number[] = SIZES_MM) => !target || target<=0 ? undefined : options.reduce((a,b)=> Math.abs(b-(target as number)) < Math.abs(a-(target as number)) ? b : a)
 
-const DEFAULT_ATTRS = { shape: "", color: "", size_mm: 0, thickness_mm: 0, front_imprint: "", back_imprint: "", scoring: "", notes: "" }
-const ensureAttrs = (a?: { shape: string; color: string; size_mm: number; thickness_mm: number; front_imprint: string; back_imprint: string; scoring: string; notes: string }) => ({ ...DEFAULT_ATTRS, ...(a || {}) })
-
-function Field({ label, badge, children, highlight }: { label: string; badge?: "Auto" | "Check"; children: React.ReactNode; highlight?: "auto" | "warn" | "error" }) {
-  const ring = highlight === "auto" ? "ring-2 ring-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/30" : highlight === "warn" ? "ring-2 ring-amber-400/60 bg-amber-50 dark:bg-amber-950/30" : highlight === "error" ? "ring-2 ring-rose-500/70 bg-rose-50 dark:bg-rose-950/30" : ""
-  return (
-    <div className={`space-y-1 transition-colors duration-150 ${ring} rounded-lg p-2`}>
-      <div className="flex items-center justify-between">
-        <Label className="text-neutral-800 dark:text-neutral-100">{label}</Label>
-        {badge && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">{badge}</span>}
-      </div>
-      {children}
-    </div>
-  )
-}
+const DEFAULT_ATTRS = { shape: "", color: "", size_mm: 0, thickness_mm: 0, imprint: "", scoring: "", notes: "" }
+const ensureAttrs = (a?: { shape: string; color: string; size_mm: number; thickness_mm: number; imprint: string; scoring: string; notes: string }) => ({ ...DEFAULT_ATTRS, ...(a || {}) })
 
 type FieldState<T> = { value: T; isAutoFilled: boolean; isEdited: boolean }
-type FormState = {
-  front: FieldState<string>
-  back: FieldState<string>
+interface FormState {
+  imprint: FieldState<string>
   shape: FieldState<string>
   color: FieldState<string>
   size: FieldState<number | undefined>
   scoring: FieldState<string>
+}
+
+function Field(
+  { label, badge, children, highlight }: { label: string; badge?: "Auto" | "Check"; children: React.ReactNode; highlight?: "auto" | "warn" | "error" }
+) {
+  const ringClass =
+    highlight === "auto"
+      ? "ring-2 ring-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/30"
+      : highlight === "warn"
+        ? "ring-2 ring-amber-400/60 bg-amber-50 dark:bg-amber-950/30"
+        : highlight === "error"
+          ? "ring-2 ring-rose-500/70 bg-rose-50 dark:bg-rose-950/30"
+          : ""
+  return (
+    <div className={`space-y-1 transition-colors duration-150 ${ringClass} rounded-lg p-2`}>
+      <div className="flex items-center justify-between">
+        <Label className="text-neutral-800 dark:text-neutral-100">{label}</Label>
+        {badge ? (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+            {badge}
+          </span>
+        ) : null}
+      </div>
+      {children}
+    </div>
+  )
 }
 
 type FlowStep = 1 | 2 | 3
@@ -57,7 +71,20 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
   const [forms, setForms] = useState<Record<string, FormState>>({})
   const [step, setStep] = useState<FlowStep>(1)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [showWebcam, setShowWebcam] = useState(false)
   const resultsHeadingRef = useRef<HTMLHeadingElement>(null)
+
+  const handleCapture = (dataUrl: string) => {
+    setShowWebcam(false)
+    try {
+      const f = dataURLtoFile(dataUrl)
+      setUploaded(true)
+      run(f)
+      setStep(2)
+    } catch (e) {
+      console.error('Capture failed', e)
+    }
+  }
 
   // Auto-advance logic and restore step/selection from session (runs only when step===1)
   useEffect(() => {
@@ -112,11 +139,9 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
         const normColor = mapValue(colorMap, a.color) || a.color || ""
         const sizeVal = a.size_mm ? closestSize(a.size_mm) : undefined
   const scoringVal = a.scoring && a.scoring !== "unclear" ? a.scoring : "none"
-        const frontVal = a.front_imprint && a.front_imprint !== "unclear" ? a.front_imprint : ""
-        const backVal = a.back_imprint && a.back_imprint !== "unclear" ? a.back_imprint : ""
+  const imprintVal = a.imprint && a.imprint !== "unclear" ? a.imprint : ""
         next[d.id] = {
-          front: { value: frontVal, isAutoFilled: !!frontVal, isEdited: false },
-          back: { value: backVal, isAutoFilled: !!backVal, isEdited: false },
+          imprint: { value: imprintVal, isAutoFilled: !!imprintVal, isEdited: false },
           shape: { value: normShape, isAutoFilled: !!normShape, isEdited: false },
           color: { value: normColor, isAutoFilled: !!normColor, isEdited: false },
           size: { value: sizeVal, isAutoFilled: typeof sizeVal === "number", isEdited: false },
@@ -140,6 +165,8 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
     }
   })
 
+  // Removed duplicate local dataURLtoFile & handleCapture
+
   const selected = useMemo(() => dets.find(d => d.id === selectedId) || null, [dets, selectedId])
 
   const showingReview = step === 2
@@ -162,7 +189,10 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                 <div>
                   <h3 className="text-lg font-semibold text-card-foreground mb-2">Upload Loose Pill Image (Supports Multiple Pills)</h3>
                   <p className="text-muted-foreground mb-4">Drag and drop an image, or click to browse</p>
-                  <Button variant="secondary">Choose File</Button>
+                  <div className="flex gap-3 justify-center">
+                    <Button variant="secondary">Choose File</Button>
+                    <Button type="button" variant="outline" onClick={(e)=> { e.stopPropagation(); setShowWebcam(true) }}>Take Photo</Button>
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground">Supports JPG, PNG, WebP • Max 10MB</p>
               </div>
@@ -211,28 +241,16 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
 
                 {/* Form fields with autofill highlights */}
                 <div className="space-y-3">
-                  <Field label="Front Imprint" badge={forms[det.id]?.front.isAutoFilled && !forms[det.id]?.front.isEdited ? "Auto" : undefined} highlight={forms[det.id]?.front.isAutoFilled && !forms[det.id]?.front.isEdited ? "auto" : undefined}>
-                    <Input className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm" value={forms[det.id]?.front.value || ""} onChange={(e)=> {
+                  <Field label="Imprint" badge={forms[det.id]?.imprint.isAutoFilled && !forms[det.id]?.imprint.isEdited ? "Auto" : undefined} highlight={forms[det.id]?.imprint.isAutoFilled && !forms[det.id]?.imprint.isEdited ? "auto" : undefined}>
+                    <Input className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm" value={forms[det.id]?.imprint.value || ""} onChange={(e)=> {
                       setForms(prev => ({
                         ...prev,
                         [det.id]: {
-                          ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"none",isAutoFilled:false,isEdited:false} }),
-                          front: { value: e.target.value, isAutoFilled: false, isEdited: true },
+                          ...(prev[det.id] || { imprint:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"none",isAutoFilled:false,isEdited:false} }),
+                          imprint: { value: e.target.value, isAutoFilled: false, isEdited: true },
                         }
                       }))
-                      setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes: { ...ensureAttrs(d.attributes), front_imprint: e.target.value } } : d))
-                    }} />
-                  </Field>
-                  <Field label="Back Imprint" badge={forms[det.id]?.back.isAutoFilled && !forms[det.id]?.back.isEdited ? "Auto" : undefined} highlight={forms[det.id]?.back.isAutoFilled && !forms[det.id]?.back.isEdited ? "auto" : undefined}>
-                    <Input className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm" value={forms[det.id]?.back.value || ""} onChange={(e)=> {
-                      setForms(prev => ({
-                        ...prev,
-                        [det.id]: {
-                          ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"none",isAutoFilled:false,isEdited:false} }),
-                          back: { value: e.target.value, isAutoFilled: false, isEdited: true },
-                        }
-                      }))
-                      setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes: { ...ensureAttrs(d.attributes), back_imprint: e.target.value } } : d))
+                      setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes: { ...ensureAttrs(d.attributes), imprint: e.target.value } } : d))
                     }} />
                   </Field>
                   <div className="grid grid-cols-2 gap-2">
@@ -263,7 +281,13 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                         setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes: { ...ensureAttrs(d.attributes), color: v } } : d))
                       }}>
                         <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select color"/></SelectTrigger>
-                        <SelectContent>{COLOR_OPTIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                        <SelectContent>
+                          <SelectItem value="any">Any Color</SelectItem>
+                          <SelectItem value="__single" disabled>Single Tones</SelectItem>
+                          {COLOR_SINGLE_TONE.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                          <SelectItem value="__two" disabled>Two Tones</SelectItem>
+                          {COLOR_TWO_TONE.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
                       </Select>
                     </Field>
                   </div>
@@ -348,5 +372,6 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
           <ResultsStep pill={selected} allPills={dets} onBack={() => setStep(2)} onSelectPill={(id: string) => setSelectedId(id)} />
         </div>
       )}
+      <WebcamCapture open={showWebcam} onClose={() => setShowWebcam(false)} onCapture={handleCapture} />
     </div>
   )}

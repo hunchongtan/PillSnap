@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Upload, Camera, X, CheckCircle } from "lucide-react"
+import { WebcamCapture } from "./webcam-capture"
+import { dataURLtoFile } from "@/lib/data-url"
 import Image from "next/image"
 import { PillAttributesStep } from "./pill-attributes-step"
 import type { ExtractedPillAttributes } from "@/lib/openai-vision"
@@ -19,8 +21,7 @@ type AnalyzeAttributes = {
   color?: string
   size_mm?: number
   thickness_mm?: number
-  front_imprint?: string
-  back_imprint?: string
+  imprint?: string
   scoring?: string
   notes?: string
 }
@@ -43,6 +44,8 @@ export function PillUploadStep({ onComplete }: PillUploadStepProps) {
   const [error, setError] = useState<string | null>(null)
   const [extractedAttributes, setExtractedAttributes] = useState<ExtractedPillAttributes | null>(null)
   const [currentStep, setCurrentStep] = useState<string>("")
+  const [showWebcam, setShowWebcam] = useState(false)
+  const [capturedPreview, setCapturedPreview] = useState<string | null>(null)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -67,6 +70,21 @@ export function PillUploadStep({ onComplete }: PillUploadStepProps) {
     accept: { "image/*": [".jpeg", ".jpg", ".png", ".webp"] },
     multiple: false,
   })
+
+
+  const handleCapture = async (dataUrl: string) => {
+    try {
+      setShowWebcam(false)
+      setCapturedPreview(dataUrl)
+      const file = dataURLtoFile(dataUrl)
+      const preview = dataUrl
+      setUploadedFile({ file, preview })
+      // auto start analyze after short delay to allow state commit
+      setTimeout(() => { handleAnalyze().catch(()=>{}) }, 50)
+    } catch (e) {
+      console.error('Capture handling failed', e)
+    }
+  }
 
   const handleAnalyze = async () => {
     if (!uploadedFile) return
@@ -146,21 +164,18 @@ export function PillUploadStep({ onComplete }: PillUploadStepProps) {
         return options.reduce((a,b)=> Math.abs(b-(target as number)) < Math.abs(a-(target as number)) ? b : a)
       }
 
-      const mappedShape = mapValue(shapeMap, attrs.shape) || ""
-      const mappedColor = mapValue(colorMap, attrs.color) || ""
-      const sizeVal = closestSize(typeof attrs.size_mm === "number" ? attrs.size_mm : Number(attrs.size_mm))
-  const scored = attrs.scoring && typeof attrs.scoring === "string" && !["none","unclear"].includes(attrs.scoring.toLowerCase())
+    const mappedShape = mapValue(shapeMap, attrs.shape) || ""
+    const mappedColor = mapValue(colorMap, attrs.color) || ""
+    const sizeVal = closestSize(typeof attrs.size_mm === "number" ? attrs.size_mm : Number(attrs.size_mm))
 
   // No coating/dosage form
 
       setExtractedAttributes({
-        front_imprint: attrs.front_imprint && attrs.front_imprint !== "unclear" ? attrs.front_imprint : "",
-        back_imprint: attrs.back_imprint && attrs.back_imprint !== "unclear" ? attrs.back_imprint : "",
+        imprint: attrs.imprint && attrs.imprint !== "unclear" ? attrs.imprint : "",
         shape: mappedShape,
         color: mappedColor,
         size_mm: sizeVal,
         scoring: attrs.scoring,
-        scored: !!scored,
         confidence: 0,
         reasoning: "",
       })
@@ -223,7 +238,10 @@ export function PillUploadStep({ onComplete }: PillUploadStepProps) {
                     {isDragActive ? "Drop your image here" : "Upload pill image"}
                   </h3>
                   <p className="text-muted-foreground mb-4">Drag and drop an image, or click to browse</p>
-                  <Button variant="secondary">Choose File</Button>
+                  <div className="flex gap-3 justify-center">
+                    <Button variant="secondary">Choose File</Button>
+                    <Button type="button" variant="outline" onClick={(e) => { e.stopPropagation(); setShowWebcam(true) }}>Take Photo</Button>
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground">Supports JPG, PNG, WebP • Max 10MB</p>
               </div>
@@ -296,6 +314,7 @@ export function PillUploadStep({ onComplete }: PillUploadStepProps) {
           </CardContent>
         </Card>
       )}
+      <WebcamCapture open={showWebcam} onClose={() => setShowWebcam(false)} onCapture={handleCapture} />
     </div>
   )
 }

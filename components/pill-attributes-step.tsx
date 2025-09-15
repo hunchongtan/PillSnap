@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { SCORING_OPTIONS, SHAPE_OPTIONS, COLOR_OPTIONS } from "@/constants/pill-options"
+import { SCORING_OPTIONS, SHAPE_OPTIONS, COLOR_SINGLE_TONE, COLOR_TWO_TONE } from "@/constants/pill-options"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Search, AlertTriangle, Upload, Edit3, Loader2 } from "lucide-react"
@@ -39,7 +39,7 @@ export function PillAttributesStep({
     () => initialAttributes || { confidence: 0, reasoning: "" }
   )
   const [imprintWarning, setImprintWarning] = useState(false)
-  const [ocrAlternatives, setOcrAlternatives] = useState<{ front_imprint?: string[]; back_imprint?: string[] }>({})
+  const [ocrAlternatives, setOcrAlternatives] = useState<{ imprint?: string[] }>({})
 
   const handlePhotoAnalysis = (analyzedAttributes: ExtractedPillAttributes, imageUrl?: string) => {
     setAttributes(analyzedAttributes)
@@ -48,8 +48,7 @@ export function PillAttributesStep({
     }
     // Set OCR alternatives for photo mode
     setOcrAlternatives({
-      front_imprint: ["B10", "810", "8IO", "BIO"],
-      back_imprint: ["20", "ZO", "2O"],
+      imprint: ["B10", "810", "8IO", "BIO", "20", "ZO", "2O"],
     })
   }
 
@@ -58,7 +57,7 @@ export function PillAttributesStep({
   }
 
   const handleSubmit = () => {
-    if (!attributes.front_imprint && !attributes.back_imprint) {
+    if (!attributes.imprint) {
       setImprintWarning(true)
     } else {
       setImprintWarning(false)
@@ -66,13 +65,13 @@ export function PillAttributesStep({
     }
   }
 
-  const handleImprintSelect = (field: "front_imprint" | "back_imprint", value: string) => {
-    setAttributes((prev) => ({ ...prev, [field]: value }))
+  const handleImprintSelect = (value: string) => {
+    setAttributes((prev) => ({ ...prev, imprint: value }))
     setImprintWarning(false)
   }
 
   // Show upload/manual entry first if no attributes yet
-  if (!attributes.front_imprint && !attributes.back_imprint && !attributes.shape && !attributes.color) {
+  if (!attributes.imprint && !attributes.shape && !attributes.color) {
     return (
       <div className="space-y-6">
         {entryMode === "photo" ? (
@@ -124,68 +123,39 @@ export function PillAttributesStep({
             <div className="md:col-span-2 space-y-4">
               <h3 className="font-semibold">Review and Edit Attributes</h3>
 
-              {/* Imprint Fields */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="front-imprint">Front Imprint</Label>
-                  <Input
-                    id="front-imprint"
-                    value={attributes.front_imprint || ""}
-                    onChange={(e) => setAttributes((prev) => ({ ...prev, front_imprint: e.target.value }))}
-                    placeholder="Enter text/numbers on front"
-                  />
-                  {ocrAlternatives.front_imprint && (
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground">OCR Alternatives:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {ocrAlternatives.front_imprint.map((alt, i) => (
-                          <Badge
-                            key={i}
-                            variant="outline"
-                            className="cursor-pointer hover:bg-accent text-xs"
-                            onClick={() => handleImprintSelect("front_imprint", alt)}
-                          >
-                            {alt}
-                          </Badge>
-                        ))}
-                      </div>
+              {/* Imprint Field */}
+              <div className="space-y-2">
+                <Label htmlFor="imprint">Imprint</Label>
+                <Input
+                  id="imprint"
+                  value={attributes.imprint || ""}
+                  onChange={(e) => setAttributes((prev) => ({ ...prev, imprint: e.target.value }))}
+                  placeholder="Enter text/numbers on pill"
+                />
+                {ocrAlternatives.imprint && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">OCR Alternatives:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {ocrAlternatives.imprint.map((alt, i) => (
+                        <Badge
+                          key={i}
+                          variant="outline"
+                          className="cursor-pointer hover:bg-accent text-xs"
+                          onClick={() => setAttributes((prev) => ({ ...prev, imprint: alt }))}
+                        >
+                          {alt}
+                        </Badge>
+                      ))}
                     </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="back-imprint">Back Imprint</Label>
-                  <Input
-                    id="back-imprint"
-                    value={attributes.back_imprint || ""}
-                    onChange={(e) => setAttributes((prev) => ({ ...prev, back_imprint: e.target.value }))}
-                    placeholder="Enter text/numbers on back"
-                  />
-                  {ocrAlternatives.back_imprint && (
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground">OCR Alternatives:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {ocrAlternatives.back_imprint.map((alt, i) => (
-                          <Badge
-                            key={i}
-                            variant="outline"
-                            className="cursor-pointer hover:bg-accent text-xs"
-                            onClick={() => handleImprintSelect("back_imprint", alt)}
-                          >
-                            {alt}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
 
               {imprintWarning && (
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    Please enter at least one imprint (front or back) for better search results.
+                    Please enter the imprint for better search results.
                   </AlertDescription>
                 </Alert>
               )}
@@ -221,10 +191,14 @@ export function PillAttributesStep({
                       <SelectValue placeholder="Select color" />
                     </SelectTrigger>
                     <SelectContent>
-                      {COLOR_OPTIONS.map((color) => (
-                        <SelectItem key={color} value={color}>
-                          {color}
-                        </SelectItem>
+                      <SelectItem value="any">Any Color</SelectItem>
+                      <SelectItem value="__single" disabled>Single Tones</SelectItem>
+                      {COLOR_SINGLE_TONE.map(color => (
+                        <SelectItem key={color} value={color}>{color}</SelectItem>
+                      ))}
+                      <SelectItem value="__two" disabled>Two Tones</SelectItem>
+                      {COLOR_TWO_TONE.map(color => (
+                        <SelectItem key={color} value={color}>{color}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

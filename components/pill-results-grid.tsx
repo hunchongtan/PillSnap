@@ -10,14 +10,16 @@ import clsx from "clsx"
 
 interface PillResult {
   id: string
+  name?: string
   brand_name?: string
-  generic_name?: string
-  strength?: string
-  imprint?: string
-  color?: string
-  shape?: string
   manufacturer?: string
+  imprint?: string
+  shape?: string
+  color?: string
+  size_mm?: number
+  scoring?: string
   image_url?: string
+  back_image_url?: string
   confidence?: number
 }
 
@@ -94,16 +96,29 @@ export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
           {results.map((pill) => (
             <Card key={pill.id} className="hover:shadow-md transition-shadow relative rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
               <CardContent className="p-4">
-                {/* Pill Image */}
-                <div className="w-full h-32 bg-muted rounded-lg mb-4 flex items-center justify-center overflow-hidden">
-                  {pill.image_url ? (
-                    <img
-                      src={pill.image_url || "/placeholder.svg"}
-                      alt={`${pill.brand_name || pill.generic_name} pill`}
-                      className="w-full h-full object-cover"
-                    />
+                {/* Pill Images */}
+                <div className="w-full mb-4">
+                  {pill.image_url || pill.back_image_url ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="h-32 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+                        {pill.image_url ? (
+                          <img src={pill.image_url} alt={`${pill.name || pill.brand_name || "Pill"} front`} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="text-muted-foreground text-xs">No front</div>
+                        )}
+                      </div>
+                      <div className="h-32 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+                        {pill.back_image_url ? (
+                          <img src={pill.back_image_url} alt={`${pill.name || pill.brand_name || "Pill"} back`} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="text-muted-foreground text-xs">No back</div>
+                        )}
+                      </div>
+                    </div>
                   ) : (
-                    <div className="text-muted-foreground text-sm">No image</div>
+                    <div className="h-32 bg-muted rounded-lg flex items-center justify-center">
+                      <div className="text-muted-foreground text-sm">No images</div>
+                    </div>
                   )}
                 </div>
 
@@ -112,9 +127,11 @@ export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                        {pill.brand_name || pill.generic_name || "Unknown"}
+                        {pill.name || pill.brand_name || "Unknown"}
                       </h3>
-                      {pill.strength && <p className="text-sm text-muted-foreground">{pill.strength}</p>}
+                      {pill.brand_name && pill.name && (
+                        <p className="text-xs text-muted-foreground">Brand: {pill.brand_name}</p>
+                      )}
                     </div>
                     {typeof pill.confidence === 'number' && (
                       (() => {
@@ -146,6 +163,12 @@ export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
                         {pill.shape}
                       </Badge>
                     )}
+                    {typeof pill.size_mm === 'number' && (
+                      <Badge variant="outline" className="text-xs">{pill.size_mm} mm</Badge>
+                    )}
+                    {pill.scoring && (
+                      <Badge variant="outline" className="text-xs">{pill.scoring}</Badge>
+                    )}
                   </div>
 
                   {pill.manufacturer && <p className="text-xs text-muted-foreground">{pill.manufacturer}</p>}
@@ -167,28 +190,32 @@ export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
             <Card key={pill.id} className="hover:shadow-md transition-shadow rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
               <CardContent className="p-4">
                 <div className="flex items-center gap-4 relative">
-                  <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {pill.image_url ? (
-                      <img
-                        src={pill.image_url || "/placeholder.svg"}
-                        alt={`${pill.brand_name || pill.generic_name} pill`}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="text-muted-foreground text-xs text-center">No image</div>
-                    )}
+                  <div className="w-32 flex gap-2 flex-shrink-0">
+                    <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+                      {pill.image_url ? (
+                        <img src={pill.image_url} alt={`${pill.name || pill.brand_name || "Pill"} front`} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="text-muted-foreground text-[10px] text-center px-1">No front</div>
+                      )}
+                    </div>
+                    <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+                      {pill.back_image_url ? (
+                        <img src={pill.back_image_url} alt={`${pill.name || pill.brand_name || "Pill"} back`} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="text-muted-foreground text-[10px] text-center px-1">No back</div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0 pr-4">
                         <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
-                          {pill.brand_name || pill.generic_name || "Unknown"}
+                          {pill.name || pill.brand_name || "Unknown"}
                         </h3>
-                        {pill.generic_name && pill.brand_name && (
-                          <p className="text-sm text-muted-foreground mb-1">{pill.generic_name}</p>
+                        {pill.brand_name && pill.name && (
+                          <p className="text-xs text-muted-foreground mb-2">Brand: {pill.brand_name}</p>
                         )}
-                        {pill.strength && <p className="text-sm text-muted-foreground mb-2">{pill.strength}</p>}
 
                         <div className="flex flex-wrap gap-2 mb-2">
                           {pill.imprint && (
@@ -196,16 +223,10 @@ export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
                               Imprint: {pill.imprint}
                             </span>
                           )}
-                          {pill.shape && (
-                            <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">
-                              {pill.shape}
-                            </span>
-                          )}
-                          {pill.color && (
-                            <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">
-                              {pill.color}
-                            </span>
-                          )}
+                          {pill.shape && (<span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">{pill.shape}</span>)}
+                          {pill.color && (<span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">{pill.color}</span>)}
+                          {typeof pill.size_mm === 'number' && (<span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">{pill.size_mm} mm</span>)}
+                          {pill.scoring && (<span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">{pill.scoring}</span>)}
                         </div>
 
                         {pill.manufacturer && <p className="text-xs text-muted-foreground">{pill.manufacturer}</p>}

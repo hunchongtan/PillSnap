@@ -1,5 +1,6 @@
 import { createServerClient } from '@/lib/server'
 import { type NextRequest, NextResponse } from 'next/server'
+import { SHAPE_OPTIONS, COLOR_OPTIONS, SCORING_OPTIONS } from '@/constants/pill-options'
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,23 +51,37 @@ export async function POST(request: NextRequest) {
       ? supabase.storage.from('pill-images').getPublicUrl(backUpload.path).data
       : null
 
-    // Insert pill data
-    const pillData = {
-      imprint: formData.get('imprint') as string,
-      shape: formData.get('shape') as string,
-      color: formData.get('color') as string,
-      scored: formData.get('scored') === 'yes',
-      dosage_form: formData.get('dosageForm') as string,
-      strength: formData.get('strength') as string,
-      brand_name: formData.get('brandGeneric') as string,
-      manufacturer: formData.get('manufacturer') as string,
-      image_url: frontUrl.publicUrl,
-      back_image_url: backUrl?.publicUrl || null,
-      status: 'pending_review',
-      created_at: new Date().toISOString(),
+    // Server-side validation using canonical constants
+    const shapeValue = formData.get('shape') as string
+    const colorValue = formData.get('color') as string
+    const scoringValue = formData.get('scoring') as string
+    if (shapeValue && !SHAPE_OPTIONS.includes(shapeValue as any)) {
+      return NextResponse.json({ error: 'Invalid shape value' }, { status: 400 })
+    }
+    if (!COLOR_OPTIONS.includes(colorValue as any)) {
+      return NextResponse.json({ error: 'Invalid color value' }, { status: 400 })
+    }
+    if (scoringValue && !SCORING_OPTIONS.includes(scoringValue as any)) {
+      return NextResponse.json({ error: 'Invalid scoring value' }, { status: 400 })
     }
 
-    const { data, error } = await supabase.from('pills').insert([pillData]).select()
+    // Insert pill data (MVP schema)
+    const sizeMmRaw = formData.get('sizeMm') as string
+    const pillData = {
+      name: (formData.get('name') as string) || null,
+      brand_name: (formData.get('brandName') as string) || null,
+      manufacturer: (formData.get('manufacturer') as string) || null,
+      imprint: (formData.get('imprint') as string) || null,
+      shape: (formData.get('shape') as string) || null,
+      color: (formData.get('color') as string) || null,
+      size_mm: sizeMmRaw ? Number(sizeMmRaw) : null,
+      scoring: (formData.get('scoring') as string) || null,
+      image_url: frontUrl.publicUrl,
+      back_image_url: backUrl?.publicUrl || null,
+      created_at: new Date().toISOString(),
+    } as any
+
+  const { data, error } = await supabase.from('pills').insert([pillData]).select()
 
     if (error) {
       console.error('Database insert error:', error)

@@ -11,10 +11,9 @@ export function PillManualStep({ onComplete }: PillManualStepProps) {
   const emptyAttributes: ExtractedPillAttributes = {
     shape: "",
     color: "",
-    front_imprint: "",
-    back_imprint: "",
+    imprint: "",
     size_mm: 0,
-    scored: false,
+    scoring: "none",
     confidence: 0,
     reasoning: "",
   }

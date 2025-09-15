@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Edit3, Search, RotateCcw } from "lucide-react"
 import type { ExtractedPillAttributes } from "@/lib/openai-vision"
-import { SHAPE_OPTIONS as CAN_SHAPES, COLOR_OPTIONS as CAN_COLORS, SCORING_OPTIONS as CAN_SCORING } from "@/constants/pill-options"
+import { SHAPE_OPTIONS as CAN_SHAPES, COLOR_SINGLE_TONE, COLOR_TWO_TONE, SCORING_OPTIONS as CAN_SCORING } from "@/constants/pill-options"
 
 interface PillAttributeEditorProps {
   initialAttributes: ExtractedPillAttributes
@@ -19,7 +19,7 @@ interface PillAttributeEditorProps {
 }
 
 const SHAPE_OPTIONS = CAN_SHAPES
-const COLOR_OPTIONS = CAN_COLORS
+// Use grouped color arrays for dropdown presentation
 
 export function PillAttributeEditor({ initialAttributes, onSearch, isSearching = false }: PillAttributeEditorProps) {
   const [attributes, setAttributes] = useState<ExtractedPillAttributes>(initialAttributes)
@@ -77,18 +77,20 @@ export function PillAttributeEditor({ initialAttributes, onSearch, isSearching =
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="color" className="text-card-foreground">
-              Color
-            </Label>
+            <Label htmlFor="color" className="text-card-foreground">Color</Label>
             <Select value={attributes.color || ""} onValueChange={(value) => updateAttribute("color", value)}>
               <SelectTrigger className="bg-input border-border">
                 <SelectValue placeholder="Select color" />
               </SelectTrigger>
               <SelectContent>
-                {COLOR_OPTIONS.map((color) => (
-                  <SelectItem key={color} value={color}>
-                    {color}
-                  </SelectItem>
+                <SelectItem value="any">Any Color</SelectItem>
+                <SelectItem value="__single" disabled>Single Tones</SelectItem>
+                {COLOR_SINGLE_TONE.map(color => (
+                  <SelectItem key={color} value={color}>{color}</SelectItem>
+                ))}
+                <SelectItem value="__two" disabled>Two Tones</SelectItem>
+                {COLOR_TWO_TONE.map(color => (
+                  <SelectItem key={color} value={color}>{color}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -112,33 +114,18 @@ export function PillAttributeEditor({ initialAttributes, onSearch, isSearching =
           </div>
         </div>
 
-        {/* Imprints */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="front-imprint" className="text-card-foreground">
-              Front Imprint
-            </Label>
-            <Input
-              id="front-imprint"
-              value={attributes.front_imprint || ""}
-              onChange={(e) => updateAttribute("front_imprint", e.target.value)}
-              placeholder="Text, numbers, or symbols"
-              className="bg-input border-border"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="back-imprint" className="text-card-foreground">
-              Back Imprint
-            </Label>
-            <Input
-              id="back-imprint"
-              value={attributes.back_imprint || ""}
-              onChange={(e) => updateAttribute("back_imprint", e.target.value)}
-              placeholder="Text, numbers, or symbols"
-              className="bg-input border-border"
-            />
-          </div>
+        {/* Imprint */}
+        <div className="space-y-2">
+          <Label htmlFor="imprint" className="text-card-foreground">
+            Imprint
+          </Label>
+          <Input
+            id="imprint"
+            value={attributes.imprint || ""}
+            onChange={(e) => updateAttribute("imprint", e.target.value)}
+            placeholder="Text, numbers, or symbols"
+            className="bg-input border-border"
+          />
         </div>
 
         {/* Scoring */}

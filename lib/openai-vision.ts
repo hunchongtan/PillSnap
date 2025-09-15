@@ -2,10 +2,8 @@ export interface ExtractedPillAttributes {
   shape?: string
   color?: string
   size_mm?: number
-  front_imprint?: string
-  back_imprint?: string
+  imprint?: string
   scoring?: string
-  scored?: boolean // Added this property
   confidence: number
   reasoning: string
 }
@@ -80,17 +78,15 @@ You are a pharmaceutical expert analyzing a pill image. Extract the following at
 1. **Shape**: Choose from the app's allowed list
 2. **Color**: Choose from the app's allowed list (or empty if unsure)
 3. **Size**: Estimate diameter/length in millimeters (common range: 4-25mm)
-4. **Front Imprint**: Any text, numbers, or symbols on the front side
-5. **Back Imprint**: Any text, numbers, or symbols on the back side (if visible)
-6. **Scoring**: "none", "1 score", or "2 scores"
+4. **Imprint**: Any text, numbers, or symbols printed on the pill (if visible)
+5. **Scoring**: "none", "1 score", or "2 scores"
 
 Respond in JSON format:
 {
   "shape": "string",
   "color": "string", 
   "size_mm": number,
-  "front_imprint": "string",
-  "back_imprint": "string",
+  "imprint": "string",
   "scoring": "string",
   "confidence": number (0-1),
   "reasoning": "Brief explanation of your analysis"

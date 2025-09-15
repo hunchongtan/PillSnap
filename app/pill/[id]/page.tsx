@@ -15,7 +15,6 @@ export default async function PillDetailPage({ params }: any) {
     .from("pills")
     .select("*")
     .eq("id", params.id)
-    .eq("status", "published")
     .single()
 
   if (error || !pill) {
@@ -71,7 +70,7 @@ export default async function PillDetailPage({ params }: any) {
                         <h4 className="font-medium mb-2">Front</h4>
                         <img
                           src={pill.image_url || "/placeholder.svg"}
-                          alt={`${pill.brand_name || pill.generic_name} front`}
+                          alt={`${pill.name || pill.brand_name} front`}
                           className="w-full max-w-sm rounded-lg border"
                         />
                       </div>
@@ -81,7 +80,7 @@ export default async function PillDetailPage({ params }: any) {
                         <h4 className="font-medium mb-2">Back</h4>
                         <img
                           src={pill.back_image_url || "/placeholder.svg"}
-                          alt={`${pill.brand_name || pill.generic_name} back`}
+                          alt={`${pill.name || pill.brand_name} back`}
                           className="w-full max-w-sm rounded-lg border"
                         />
                       </div>
@@ -95,10 +94,7 @@ export default async function PillDetailPage({ params }: any) {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-2xl">
-                    {pill.brand_name || pill.generic_name || "Unknown Medication"}
-                  </CardTitle>
-                  {pill.strength && <p className="text-lg text-muted-foreground">{pill.strength}</p>}
+                  <CardTitle className="text-2xl">{pill.name || pill.brand_name || "Unknown Medication"}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -106,10 +102,7 @@ export default async function PillDetailPage({ params }: any) {
                       <h4 className="font-medium text-sm text-muted-foreground">Manufacturer</h4>
                       <p>{pill.manufacturer || "Not specified"}</p>
                     </div>
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground">Dosage Form</h4>
-                      <p className="capitalize">{pill.dosage_form || "Not specified"}</p>
-                    </div>
+                    <div />
                   </div>
 
                   <div>
@@ -117,7 +110,8 @@ export default async function PillDetailPage({ params }: any) {
                     <div className="flex flex-wrap gap-2">
                       {pill.shape && <Badge variant="outline">{pill.shape}</Badge>}
                       {pill.color && <Badge variant="outline">{pill.color}</Badge>}
-                      {pill.scored !== null && <Badge variant="outline">{pill.scored ? "Scored" : "Not scored"}</Badge>}
+                      {typeof pill.size_mm === 'number' && <Badge variant="outline">{pill.size_mm} mm</Badge>}
+                      {pill.scoring && <Badge variant="outline">{pill.scoring}</Badge>}
                     </div>
                   </div>
 

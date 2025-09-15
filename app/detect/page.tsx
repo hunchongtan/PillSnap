@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo, useRef, useState, useEffect } from "react"
 import { useDropzone } from "react-dropzone"
-import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -11,7 +10,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
 import { Upload, ImageIcon } from "lucide-react"
 
 // Types
@@ -20,7 +18,7 @@ export type SegmentPrediction = {
 }
 export type SegmentResponse = { image: { width: number; height: number }; predictions: SegmentPrediction[] }
 export type CropResponse = { image: string; mimeType: string; width: number; height: number }
-export type AnalyzeAttributes = { shape?: string; color?: string; size_mm?: number; thickness_mm?: number; front_imprint?: string; back_imprint?: string; coating?: string; scoring?: string; notes?: string }
+export type AnalyzeAttributes = { shape?: string; color?: string; size_mm?: number; thickness_mm?: number; imprint?: string; coating?: string; scoring?: string; notes?: string }
 export type AnalyzeResponse = { attributes: AnalyzeAttributes }
 
 export type Det = {
@@ -32,12 +30,11 @@ export type Det = {
   previewUrl?: string
   attributes?: Required<AnalyzeAttributes>
   form?: {
-    front_imprint: { value: string; isAutoFilled: boolean; isEdited: boolean }
-    back_imprint: { value: string; isAutoFilled: boolean; isEdited: boolean }
+    imprint: { value: string; isAutoFilled: boolean; isEdited: boolean }
     shape: { value: string; isAutoFilled: boolean; isEdited: boolean }
     color: { value: string; isAutoFilled: boolean; isEdited: boolean }
     size_mm: { value: number | undefined; isAutoFilled: boolean; isEdited: boolean }
-    scored: { value: boolean; isAutoFilled: boolean; isEdited: boolean }
+    scoring: { value: string; isAutoFilled: boolean; isEdited: boolean }
   }
   loading: boolean
   error?: string
@@ -50,7 +47,6 @@ const mapValue = (map:Record<string,string>, v?:string) => v ? map[v.toLowerCase
 const closestSize = (target?:number, options:number[] = SIZES_MM) => !target || target<=0 ? undefined : options.reduce((a,b)=> Math.abs(b-target) < Math.abs(a-target) ? b : a)
 
 export default function DetectPage() {
-  const router = useRouter()
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState<string|undefined>()
   const [progress, setProgress] = useState(0)
@@ -139,15 +135,12 @@ export default function DetectPage() {
           const mappedShape = mapValue(shapeMap, a.shape) || ""
           const mappedColor = mapValue(colorMap, a.color) || ""
           const sizeVal = closestSize(typeof a.size_mm === "number" ? a.size_mm : Number(a.size_mm))
-          const scored = a.scoring && typeof a.scoring === "string" && !["none","unclear"].includes(a.scoring.toLowerCase())
-
           const attributes: Required<AnalyzeAttributes> = {
             shape: mappedShape,
             color: mappedColor,
             size_mm: sizeVal || 0,
             thickness_mm: typeof a.thickness_mm === "number" ? a.thickness_mm : 0,
-            front_imprint: a.front_imprint && a.front_imprint !== "unclear" ? a.front_imprint : "",
-            back_imprint: a.back_imprint && a.back_imprint !== "unclear" ? a.back_imprint : "",
+            imprint: a.imprint && a.imprint !== "unclear" ? a.imprint : "",
             coating: a.coating || "",
             scoring: a.scoring || "",
             notes: a.notes || "",
@@ -155,12 +148,11 @@ export default function DetectPage() {
 
           // Initialize editable form with autofill flags
           const form = {
-            front_imprint: { value: attributes.front_imprint, isAutoFilled: true, isEdited: false },
-            back_imprint: { value: attributes.back_imprint, isAutoFilled: true, isEdited: false },
+            imprint: { value: attributes.imprint, isAutoFilled: true, isEdited: false },
             shape: { value: attributes.shape, isAutoFilled: true, isEdited: false },
             color: { value: attributes.color, isAutoFilled: true, isEdited: false },
             size_mm: { value: sizeVal, isAutoFilled: true, isEdited: false },
-            scored: { value: !!scored, isAutoFilled: true, isEdited: false },
+            scoring: { value: attributes.scoring || "none", isAutoFilled: !!attributes.scoring, isEdited: false },
           }
 
           setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes, form, loading: false } : d))
@@ -250,25 +242,17 @@ export default function DetectPage() {
                 {det.error && <Alert variant="destructive"><AlertDescription>{det.error}</AlertDescription></Alert>}
                 {/* Editable form */}
                 <div className="space-y-3">
-                  <Field label="Front Imprint" badge={!det.form?.front_imprint.isEdited && det.form?.front_imprint.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.front_imprint.isEdited && det.form?.front_imprint.isAutoFilled ? "auto" : undefined}>
+                  <Field label="Imprint" badge={!det.form?.imprint.isEdited && det.form?.imprint.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.imprint.isEdited && det.form?.imprint.isAutoFilled ? "auto" : undefined}>
                     <Input
                       className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"
-                      value={det.form?.front_imprint.value || ""}
-                      onChange={(e)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, front_imprint: { value: e.target.value, isAutoFilled: false, isEdited: true }, back_imprint: d.form!.back_imprint, shape: d.form!.shape, color: d.form!.color, size_mm: d.form!.size_mm, scored: d.form!.scored } } : d))}
-                    />
-                  </Field>
-
-                  <Field label="Back Imprint" badge={!det.form?.back_imprint.isEdited && det.form?.back_imprint.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.back_imprint.isEdited && det.form?.back_imprint.isAutoFilled ? "auto" : undefined}>
-                    <Input
-                      className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"
-                      value={det.form?.back_imprint.value || ""}
-                      onChange={(e)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, back_imprint: { value: e.target.value, isAutoFilled: false, isEdited: true }, front_imprint: d.form!.front_imprint, shape: d.form!.shape, color: d.form!.color, size_mm: d.form!.size_mm, scored: d.form!.scored } } : d))}
+                      value={det.form?.imprint.value || ""}
+                      onChange={(e)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, imprint: { value: e.target.value, isAutoFilled: false, isEdited: true }, shape: d.form!.shape, color: d.form!.color, size_mm: d.form!.size_mm, scoring: d.form!.scoring } } : d))}
                     />
                   </Field>
 
                   <div className="grid grid-cols-2 gap-2">
                     <Field label="Shape" badge={!det.form?.shape.isEdited && det.form?.shape.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.shape.isEdited && det.form?.shape.isAutoFilled ? "auto" : undefined}>
-                      <Select value={det.form?.shape.value || ""} onValueChange={(v)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, shape: { value: v, isAutoFilled: false, isEdited: true }, front_imprint: d.form!.front_imprint, back_imprint: d.form!.back_imprint, color: d.form!.color, size_mm: d.form!.size_mm, scored: d.form!.scored } } : d))}>
+                      <Select value={det.form?.shape.value || ""} onValueChange={(v)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, shape: { value: v, isAutoFilled: false, isEdited: true }, imprint: d.form!.imprint, color: d.form!.color, size_mm: d.form!.size_mm, scoring: d.form!.scoring } } : d))}>
                         <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select shape"/></SelectTrigger>
                         <SelectContent>
                           {["Round","Oval","Capsule","Square","Triangle","Diamond","Pentagon","Hexagon","Octagon","Other"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -276,7 +260,7 @@ export default function DetectPage() {
                       </Select>
                     </Field>
                     <Field label="Color" badge={!det.form?.color.isEdited && det.form?.color.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.color.isEdited && det.form?.color.isAutoFilled ? "auto" : undefined}>
-                      <Select value={det.form?.color.value || ""} onValueChange={(v)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, color: { value: v, isAutoFilled: false, isEdited: true }, front_imprint: d.form!.front_imprint, back_imprint: d.form!.back_imprint, shape: d.form!.shape, size_mm: d.form!.size_mm, scored: d.form!.scored } } : d))}>
+                      <Select value={det.form?.color.value || ""} onValueChange={(v)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, color: { value: v, isAutoFilled: false, isEdited: true }, imprint: d.form!.imprint, shape: d.form!.shape, size_mm: d.form!.size_mm, scoring: d.form!.scoring } } : d))}>
                         <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select color"/></SelectTrigger>
                         <SelectContent>
                           {["White","Yellow","Orange","Red","Pink","Purple","Blue","Green","Brown","Gray","Black","Clear","Beige","Gold","Maroon","Peach","Tan"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
@@ -287,18 +271,20 @@ export default function DetectPage() {
 
                   <div className="grid grid-cols-2 gap-2">
                     <Field label="Size (mm)" badge={!det.form?.size_mm.isEdited && det.form?.size_mm.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.size_mm.isEdited && det.form?.size_mm.isAutoFilled ? "auto" : undefined}>
-                      <Select value={det.form?.size_mm.value ? String(det.form.size_mm.value) : ""} onValueChange={(v)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, size_mm: { value: v ? Number(v) : undefined, isAutoFilled: false, isEdited: true }, front_imprint: d.form!.front_imprint, back_imprint: d.form!.back_imprint, shape: d.form!.shape, color: d.form!.color, scored: d.form!.scored } } : d))}>
+                      <Select value={det.form?.size_mm.value ? String(det.form.size_mm.value) : ""} onValueChange={(v)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, size_mm: { value: v ? Number(v) : undefined, isAutoFilled: false, isEdited: true }, imprint: d.form!.imprint, shape: d.form!.shape, color: d.form!.color, scoring: d.form!.scoring } } : d))}>
                         <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select size (mm)"/></SelectTrigger>
                         <SelectContent>
                           {SIZES_MM.map(mm => <SelectItem key={mm} value={String(mm)}>{mm} mm</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </Field>
-                    <Field label="Scored" badge={!det.form?.scored.isEdited && det.form?.scored.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.scored.isEdited && det.form?.scored.isAutoFilled ? "auto" : undefined}>
-                      <div className="flex items-center gap-2">
-                        <Switch checked={!!det.form?.scored.value} onCheckedChange={(checked)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, scored: { value: !!checked, isAutoFilled: false, isEdited: true } } } : d))} />
-                        <span className="text-xs text-muted-foreground">Has a score line</span>
-                      </div>
+                    <Field label="Scoring" badge={!det.form?.scoring.isEdited && det.form?.scoring.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.scoring.isEdited && det.form?.scoring.isAutoFilled ? "auto" : undefined}>
+                      <Select value={det.form?.scoring.value || "none"} onValueChange={(v)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, scoring: { value: v, isAutoFilled: false, isEdited: true } } } : d))}>
+                        <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select scoring"/></SelectTrigger>
+                        <SelectContent>
+                          {["none","1 score","2 scores"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                     </Field>
                   </div>
                 </div>

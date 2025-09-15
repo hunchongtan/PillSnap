@@ -55,7 +55,7 @@ function AboutDialog() {
           About
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+  <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             About PillSnap
@@ -119,7 +119,7 @@ function HowItWorksDialog() {
           How It Works
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+  <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Zap className="w-5 h-5" />
