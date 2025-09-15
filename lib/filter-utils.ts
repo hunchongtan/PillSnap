@@ -15,6 +15,6 @@ export function buildSearchQuery(filters: PillSearchFilters): PillSearchFilters 
   return {
     imprint: filters.imprint?.trim() || undefined,
     shape: sanitizeFilterValue(filters.shape),
-    color: sanitizeFilterValue(filters.color)
+    color: sanitizeFilterValue(filters.color),
   }
 }

@@ -1,6 +1,6 @@
+import { COLOR_OPTIONS, SCORING_OPTIONS, SHAPE_OPTIONS } from '@/constants/pill-options'
 import { createServerClient } from '@/lib/server'
 import { type NextRequest, NextResponse } from 'next/server'
-import { SHAPE_OPTIONS, COLOR_OPTIONS, SCORING_OPTIONS } from '@/constants/pill-options'
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       created_at: new Date().toISOString(),
     } as any
 
-  const { data, error } = await supabase.from('pills').insert([pillData]).select()
+    const { data, error } = await supabase.from('pills').insert([pillData]).select()
 
     if (error) {
       console.error('Database insert error:', error)
