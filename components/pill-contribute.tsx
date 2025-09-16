@@ -341,6 +341,7 @@ export function PillContribute() {
                 value={formData.imprint}
                 onChange={(e) => setFormData({ ...formData, imprint: e.target.value })}
                 placeholder="e.g., ADVIL, L544"
+                className="bg-white"
               />
               {fieldErrors.imprint && <p className="text-xs text-destructive mt-1">{fieldErrors.imprint}</p>}
             </div>
@@ -348,7 +349,7 @@ export function PillContribute() {
             <div>
               <Label htmlFor="shape">Shape <span className="text-red-500">*</span></Label>
               <Select value={formData.shape} onValueChange={(value) => setFormData({ ...formData, shape: value })}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Select shape" />
                 </SelectTrigger>
                 <SelectContent>
@@ -363,7 +364,7 @@ export function PillContribute() {
             <div>
               <Label htmlFor="color">Color <span className="text-red-500">*</span></Label>
               <Select value={formData.color} onValueChange={(value) => setFormData({ ...formData, color: value })}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Select color" />
                 </SelectTrigger>
                 <SelectContent>
@@ -396,6 +397,7 @@ export function PillContribute() {
                   }
                 }}
                 placeholder="e.g., 11.0"
+                className="bg-white"
               />
               {fieldErrors.sizeMm && <p className="text-xs text-destructive mt-1">{fieldErrors.sizeMm}</p>}
             </div>
@@ -403,7 +405,7 @@ export function PillContribute() {
             <div>
               <Label htmlFor="scoring">Scoring <span className="text-red-500">*</span></Label>
               <Select value={formData.scoring} onValueChange={(value) => setFormData({ ...formData, scoring: value })}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Select scoring" />
                 </SelectTrigger>
                 <SelectContent>
@@ -420,6 +422,7 @@ export function PillContribute() {
                 value={formData.commonUse}
                 onChange={(e) => setFormData({ ...formData, commonUse: e.target.value })}
                 placeholder="e.g., Pain relief, Hypertension"
+                className="bg-white"
               />
               {fieldErrors.commonUse && <p className="text-xs text-destructive mt-1">{fieldErrors.commonUse}</p>}
             </div>
@@ -427,7 +430,7 @@ export function PillContribute() {
             <div>
               <Label htmlFor="market">Country / Market</Label>
               <Select value={formData.market} onValueChange={(value) => setFormData({ ...formData, market: value })}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Select market" />
                 </SelectTrigger>
                 <SelectContent>
