@@ -1,5 +1,9 @@
+// IMPORTANT: These option sets are intentionally truncated for MVP scope.
+// Do NOT add new items without explicit product approval; expanding affects
+// normalization, AI prompt expectations, and confidence scoring logic.
 export const SHAPE_OPTIONS = ['Round', 'Oval', 'Capsule/Oblong', 'Rectangle', 'Barrel'] as const
 
+// Single-tone colors only (keep minimal set)
 export const COLOR_SINGLE_TONE = [
   'White',
   'Blue',
@@ -10,6 +14,7 @@ export const COLOR_SINGLE_TONE = [
   'Yellow',
 ] as const
 
+// Limited two-tone combinations supported (keep in sync with analyzer normalization)
 export const COLOR_TWO_TONE = [
   'Blue & White',
   'Green & White',

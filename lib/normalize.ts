@@ -9,40 +9,19 @@ import {
 
 export function normalizeShape(input?: string): ShapeOption | '' {
   const s = (input || '').toLowerCase().trim()
+  if (!s) return ''
+  // Allowed truncated set only
+  const direct = (SHAPE_OPTIONS as readonly string[]).find(o => o.toLowerCase() === s)
+  if (direct) return direct as ShapeOption
+  // Synonym mapping into truncated set
   const map: Record<string, ShapeOption> = {
-    round: 'Round',
-    circle: 'Round',
+    round: 'Round', circle: 'Round',
     oval: 'Oval',
-    oblong: 'Capsule/Oblong',
-    capsule: 'Capsule/Oblong',
-    rectangle: 'Rectangle',
-    rectangular: 'Rectangle',
-    square: 'Four-sided',
-    'four-sided': 'Four-sided',
-    triangle: 'Three-sided',
-    'three-sided': 'Three-sided',
-    pentagon: 'Five-sided',
-    'five-sided': 'Five-sided',
-    hexagon: 'Six-sided',
-    'six-sided': 'Six-sided',
-    heptagon: 'Seven-sided',
-    'seven-sided': 'Seven-sided',
-    octagon: 'Eight-sided',
-    'eight-sided': 'Eight-sided',
-    heart: 'Heart-shape',
-    kidney: 'Kidney-shape',
-    egg: 'Egg-shape',
-    barrel: 'Barrel',
-    u: 'U-shape',
-    'u-shape': 'U-shape',
-    'figure eight': 'Figure eight-shape',
-    'figure-eight': 'Figure eight-shape',
-    character: 'Character-shape',
-    gear: 'Gear-shape',
+    oblong: 'Capsule/Oblong', capsule: 'Capsule/Oblong', 'capsule/oblong': 'Capsule/Oblong',
+    rectangle: 'Rectangle', rectangular: 'Rectangle',
+    barrel: 'Barrel', drum: 'Barrel'
   }
-  const candidate =
-    map[s] ?? (SHAPE_OPTIONS as readonly string[]).find((o) => o.toLowerCase() === s)
-  return (candidate as ShapeOption) || ''
+  return (map[s] as ShapeOption) || ''
 }
 
 export function normalizeColor(input?: string): ColorOption | '' {
