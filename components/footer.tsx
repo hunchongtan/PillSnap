@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog"
 import { PillContribute } from "./pill-contribute"
 import { Plus } from "lucide-react"
 
@@ -22,6 +22,9 @@ export function Footer() {
             <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Contribute Pill Images</DialogTitle>
+                <DialogDescription>
+                  Upload front and back images with optional details to help improve the database.
+                </DialogDescription>
               </DialogHeader>
               <PillContribute />
             </DialogContent>

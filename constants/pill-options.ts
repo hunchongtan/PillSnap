@@ -181,5 +181,5 @@ export const COLOR_TWO_TONE = [
 export type ShapeOption = (typeof SHAPE_OPTIONS)[number]
 export type ColorOption = (typeof COLOR_OPTIONS)[number]
 
-export const SCORING_OPTIONS = ['none', '1 score', '2 scores'] as const
+export const SCORING_OPTIONS = ['no score', '1 score', '2 scores'] as const
 export type ScoringOption = (typeof SCORING_OPTIONS)[number]

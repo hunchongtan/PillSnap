@@ -133,7 +133,7 @@ export function PillAttributeEditor({ initialAttributes, onSearch, isSearching =
           <Label htmlFor="scoring" className="text-card-foreground">
             Scoring
           </Label>
-          <Select value={attributes.scoring || "none"} onValueChange={(value) => updateAttribute("scoring", value)}>
+          <Select value={attributes.scoring || "no score"} onValueChange={(value) => updateAttribute("scoring", value)}>
             <SelectTrigger className="bg-input border-border">
               <SelectValue placeholder="Select scoring type" />
             </SelectTrigger>

@@ -10,8 +10,8 @@ export function middleware(req: NextRequest) {
   res.headers.set(
     'Permissions-Policy',
     [
-      'camera=()',
-      'microphone=()',
+      'camera=(self)',
+      'microphone=(self)',
       'geolocation=()',
       'interest-cohort=()',
       'fullscreen=(self)',

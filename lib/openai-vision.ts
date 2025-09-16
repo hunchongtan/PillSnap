@@ -77,9 +77,9 @@ You are a pharmaceutical expert analyzing a pill image. Extract the following at
 
 1. **Shape**: Choose from the app's allowed list
 2. **Color**: Choose from the app's allowed list (or empty if unsure)
-3. **Size**: Estimate diameter/length in millimeters (common range: 4-25mm)
+3. **Size**: Estimate diameter/length in millimeters, in 1 decimal place (common range: 4.0-25.0mm)
 4. **Imprint**: Any text, numbers, or symbols printed on the pill (if visible)
-5. **Scoring**: "none", "1 score", or "2 scores"
+5. **Scoring**: "no score", "1 score", or "2 scores"
 
 Respond in JSON format:
 {

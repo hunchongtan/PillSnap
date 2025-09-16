@@ -13,7 +13,7 @@ export function PillManualStep({ onComplete }: PillManualStepProps) {
     color: "",
     imprint: "",
     size_mm: 0,
-    scoring: "none",
+  scoring: "no score",
     confidence: 0,
     reasoning: "",
   }

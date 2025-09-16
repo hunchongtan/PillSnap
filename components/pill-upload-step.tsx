@@ -238,9 +238,9 @@ export function PillUploadStep({ onComplete }: PillUploadStepProps) {
                     {isDragActive ? "Drop your image here" : "Upload pill image"}
                   </h3>
                   <p className="text-muted-foreground mb-4">Drag and drop an image, or click to browse</p>
-                  <div className="flex gap-3 justify-center">
-                    <Button variant="secondary">Choose File</Button>
-                    <Button type="button" variant="outline" onClick={(e) => { e.stopPropagation(); setShowWebcam(true) }}>Take Photo</Button>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button variant="secondary" className="w-full sm:w-auto">Choose File</Button>
+                    <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={(e) => { e.stopPropagation(); setShowWebcam(true) }}>Take Photo</Button>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">Supports JPG, PNG, WebP • Max 10MB</p>

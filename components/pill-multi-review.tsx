@@ -138,14 +138,14 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
         const normShape = mapValue(shapeMap, a.shape) || a.shape || ""
         const normColor = mapValue(colorMap, a.color) || a.color || ""
         const sizeVal = a.size_mm ? closestSize(a.size_mm) : undefined
-  const scoringVal = a.scoring && a.scoring !== "unclear" ? a.scoring : "none"
+  const scoringVal = a.scoring && a.scoring !== "unclear" ? a.scoring : "no score"
   const imprintVal = a.imprint && a.imprint !== "unclear" ? a.imprint : ""
         next[d.id] = {
           imprint: { value: imprintVal, isAutoFilled: !!imprintVal, isEdited: false },
           shape: { value: normShape, isAutoFilled: !!normShape, isEdited: false },
           color: { value: normColor, isAutoFilled: !!normColor, isEdited: false },
           size: { value: sizeVal, isAutoFilled: typeof sizeVal === "number", isEdited: false },
-          scoring: { value: scoringVal, isAutoFilled: scoringVal !== "none", isEdited: false },
+          scoring: { value: scoringVal, isAutoFilled: scoringVal !== "no score", isEdited: false },
         }
       }
       return next
@@ -189,9 +189,9 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                 <div>
                   <h3 className="text-lg font-semibold text-card-foreground mb-2">Upload Loose Pill Image (Supports Multiple Pills)</h3>
                   <p className="text-muted-foreground mb-4">Drag and drop an image, or click to browse</p>
-                  <div className="flex gap-3 justify-center">
-                    <Button variant="secondary">Choose File</Button>
-                    <Button type="button" variant="outline" onClick={(e)=> { e.stopPropagation(); setShowWebcam(true) }}>Take Photo</Button>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button variant="secondary" className="w-full sm:w-auto">Choose File</Button>
+                    <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={(e)=> { e.stopPropagation(); setShowWebcam(true) }}>Take Photo</Button>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">Supports JPG, PNG, WebP • Max 10MB</p>
@@ -246,7 +246,7 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                       setForms(prev => ({
                         ...prev,
                         [det.id]: {
-                          ...(prev[det.id] || { imprint:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"none",isAutoFilled:false,isEdited:false} }),
+                          ...(prev[det.id] || { imprint:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"no score",isAutoFilled:false,isEdited:false} }),
                           imprint: { value: e.target.value, isAutoFilled: false, isEdited: true },
                         }
                       }))
@@ -259,7 +259,7 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                         setForms(prev => ({
                           ...prev,
                           [det.id]: {
-                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"none",isAutoFilled:false,isEdited:false} }),
+                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"no score",isAutoFilled:false,isEdited:false} }),
                             shape: { value: v, isAutoFilled: false, isEdited: true },
                           }
                         }))
@@ -274,7 +274,7 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                         setForms(prev => ({
                           ...prev,
                           [det.id]: {
-                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"none",isAutoFilled:false,isEdited:false} }),
+                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"no score",isAutoFilled:false,isEdited:false} }),
                             color: { value: v, isAutoFilled: false, isEdited: true },
                           }
                         }))
@@ -298,7 +298,7 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                         setForms(prev => ({
                           ...prev,
                           [det.id]: {
-                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"none",isAutoFilled:false,isEdited:false} }),
+                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"no score",isAutoFilled:false,isEdited:false} }),
                             size: { value: num, isAutoFilled: false, isEdited: true },
                           }
                         }))
@@ -309,11 +309,11 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                       </Select>
                     </Field>
                     <Field label="Scoring">
-                      <Select value={forms[det.id]?.scoring.value || "none"} onValueChange={(v)=> {
+                      <Select value={forms[det.id]?.scoring.value || "no score"} onValueChange={(v)=> {
                         setForms(prev => ({
                           ...prev,
                           [det.id]: {
-                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"none",isAutoFilled:false,isEdited:false} }),
+                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"no score",isAutoFilled:false,isEdited:false} }),
                             scoring: { value: v, isAutoFilled: false, isEdited: true },
                           }
                         }))

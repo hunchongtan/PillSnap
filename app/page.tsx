@@ -116,18 +116,18 @@ export default function HomePage() {
             onStepClick={handleStepClick}
             onBack={handleBack}
           />
-          <div className="text-center mb-8">
+          <div className="text-center mb-6 sm:mb-8">
             {currentStep === "review" ? (
               <>
-                <h1 className="text-4xl font-bold text-foreground mb-2">Review pill attributes</h1>
-                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                <h1 className="text-2xl sm:text-4xl font-bold text-foreground mb-2">Review pill attributes</h1>
+                <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto">
                   Review and edit the detected pill attributes before searching.
                 </p>
               </>
             ) : (
               <>
-                <h1 className="text-4xl font-bold text-foreground mb-2">Results</h1>
-                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                <h1 className="text-2xl sm:text-4xl font-bold text-foreground mb-2">Results</h1>
+                <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto">
                   Browse matches based on the selected pill's attributes.
                 </p>
               </>
@@ -171,9 +171,9 @@ export default function HomePage() {
         {/* Search Step */}
         {currentStep === "search" && (
           <>
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-foreground mb-2">Search for your pill</h1>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <div className="text-center mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-4xl font-bold text-foreground mb-2">Search for your pill</h1>
+              <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto">
                 Search by imprint, shape, and color, or use the camera to extract attributes from a photo.
               </p>
             </div>
@@ -191,8 +191,8 @@ export default function HomePage() {
         {/* Results Step */}
         {currentStep === "results" && searchResults && (
           <>
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-foreground mb-2">Results</h1>
+            <div className="text-center mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-4xl font-bold text-foreground mb-2">Results</h1>
 
               <div className="flex items-center justify-center gap-4 mt-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -60,5 +60,5 @@ export function normalizeScoring(input?: string): ScoringOption {
   if ((SCORING_OPTIONS as readonly string[]).includes(s)) return s as ScoringOption
   if (s.includes('2')) return '2 scores'
   if (s.includes('1')) return '1 score'
-  return 'none' // treat "unclear" or empty as "none"
+  return 'no score' // treat "unclear" or empty as "no score"
 }

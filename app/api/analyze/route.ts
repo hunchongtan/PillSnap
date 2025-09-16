@@ -23,7 +23,7 @@ const PillAttributesSchema = z
     color: z.enum(COLOR_OPTIONS).or(z.literal('')).default(''),
     size_mm: z.coerce.number().min(0).default(0),
     imprint: z.string().default(''),
-    scoring: z.enum(SCORING_OPTIONS).default('none'),
+  scoring: z.enum(SCORING_OPTIONS).default('no score'),
   })
   .strict()
 
@@ -53,7 +53,7 @@ Return a single JSON object exactly like this (valid JSON, no extra keys):
 
 Rules:
 - Choose shape/color ONLY from the lists; if unsure, use empty string "".
-- Scoring MUST be exactly one of ${allowedScoring}; use "none" when unclear or absent.
+- Scoring MUST be exactly one of ${allowedScoring}; use "no score" when unclear or absent.
 - Do not identify the medicine; extract visible attributes only.
 - Output JSON only.
 `.trim()

@@ -16,7 +16,7 @@ export function ResultsStep({ pill, allPills, onBack, onSelectPill }: { pill: De
   const shape = pill.attributes?.shape || ""
   const color = pill.attributes?.color || ""
   const size_mm = pill.attributes?.size_mm || 0
-  const scoring = pill.attributes?.scoring || "none"
+  const scoring = pill.attributes?.scoring || "no score"
   const extra = pill.extra || { patientHistory: "", possibleName: "", notes: "" }
   const hasExtra = !!(extra.patientHistory || extra.possibleName || extra.notes)
 
@@ -50,7 +50,7 @@ export function ResultsStep({ pill, allPills, onBack, onSelectPill }: { pill: De
             <div className="text-muted-foreground">Size</div>
             <div className="font-medium">{size_mm ? `${size_mm} mm` : ""}</div>
             <div className="text-muted-foreground">Scoring</div>
-            <div className="font-medium">{scoring || "none"}</div>
+            <div className="font-medium">{scoring || "no score"}</div>
           </div>
         </CardContent>
       </Card>

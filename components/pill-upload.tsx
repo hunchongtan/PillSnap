@@ -201,11 +201,11 @@ export function PillUpload() {
                     {isDragActive ? "Drop your image here" : "Upload pill image"}
                   </h3>
                   <p className="text-muted-foreground mb-4">Drag and drop an image, or click to browse</p>
-                  <div className="flex gap-3 justify-center">
-                    <Button variant="secondary" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button variant="secondary" className="bg-secondary text-secondary-foreground hover:bg-secondary/90 w-full sm:w-auto">
                       Choose File
                     </Button>
-                    <Button type="button" variant="outline" onClick={(e) => { e.stopPropagation(); setShowWebcam(true) }}>
+                    <Button type="button" variant="outline" onClick={(e) => { e.stopPropagation(); setShowWebcam(true) }} className="w-full sm:w-auto">
                       Take Photo
                     </Button>
                   </div>

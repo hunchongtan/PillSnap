@@ -152,7 +152,7 @@ export default function DetectPage() {
             shape: { value: attributes.shape, isAutoFilled: true, isEdited: false },
             color: { value: attributes.color, isAutoFilled: true, isEdited: false },
             size_mm: { value: sizeVal, isAutoFilled: true, isEdited: false },
-            scoring: { value: attributes.scoring || "none", isAutoFilled: !!attributes.scoring, isEdited: false },
+            scoring: { value: attributes.scoring || "no score", isAutoFilled: !!attributes.scoring, isEdited: false },
           }
 
           setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes, form, loading: false } : d))
@@ -279,10 +279,10 @@ export default function DetectPage() {
                       </Select>
                     </Field>
                     <Field label="Scoring" badge={!det.form?.scoring.isEdited && det.form?.scoring.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.scoring.isEdited && det.form?.scoring.isAutoFilled ? "auto" : undefined}>
-                      <Select value={det.form?.scoring.value || "none"} onValueChange={(v)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, scoring: { value: v, isAutoFilled: false, isEdited: true } } } : d))}>
+                      <Select value={det.form?.scoring.value || "no score"} onValueChange={(v)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, scoring: { value: v, isAutoFilled: false, isEdited: true } } } : d))}>
                         <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select scoring"/></SelectTrigger>
                         <SelectContent>
-                          {["none","1 score","2 scores"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                          {["no score","1 score","2 scores"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </Field>

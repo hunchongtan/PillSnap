@@ -209,7 +209,7 @@ export function PillAttributesStep({
               <div className="space-y-2">
                 <Label>Scoring</Label>
                 <Select
-                  value={attributes.scoring || "none"}
+                  value={attributes.scoring || "no score"}
                   onValueChange={(value) => setAttributes((prev) => ({ ...prev, scoring: value }))}
                 >
                   <SelectTrigger>
