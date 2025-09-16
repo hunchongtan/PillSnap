@@ -308,6 +308,7 @@ export function PillContribute() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g., Acetaminophen 325mg"
+                className="bg-white"
               />
               {fieldErrors.name && <p className="text-xs text-destructive mt-1">{fieldErrors.name}</p>}
             </div>
@@ -319,6 +320,7 @@ export function PillContribute() {
                 value={formData.brandName}
                 onChange={(e) => setFormData({ ...formData, brandName: e.target.value })}
                 placeholder="e.g., Tylenol"
+                className="bg-white"
               />
               {fieldErrors.brandName && <p className="text-xs text-destructive mt-1">{fieldErrors.brandName}</p>}
             </div>
@@ -330,6 +332,7 @@ export function PillContribute() {
                 value={formData.manufacturer}
                 onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
                 placeholder="e.g., Johnson & Johnson"
+                className="bg-white"
               />
               {fieldErrors.manufacturer && <p className="text-xs text-destructive mt-1">{fieldErrors.manufacturer}</p>}
             </div>
@@ -445,7 +448,7 @@ export function PillContribute() {
             <div>
               <Label htmlFor="approvalStatus">Approval Status / Source</Label>
               <Select value={formData.approvalStatus} onValueChange={(value) => setFormData({ ...formData, approvalStatus: value })}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
