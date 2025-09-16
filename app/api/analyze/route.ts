@@ -111,6 +111,9 @@ export async function POST(request: NextRequest) {
 
     const raw = resp.choices[0]?.message?.content ?? '{}'
     const parsed = OutputSchema.parse(JSON.parse(raw))
+    if (parsed?.attributes?.size_mm && Number.isFinite(parsed.attributes.size_mm)) {
+      parsed.attributes.size_mm = Math.round(parsed.attributes.size_mm * 10) / 10
+    }
 
     return NextResponse.json(parsed)
   } catch (error: unknown) {

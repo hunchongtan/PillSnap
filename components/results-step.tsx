@@ -48,7 +48,7 @@ export function ResultsStep({ pill, allPills, onBack, onSelectPill }: { pill: De
             <div className="text-muted-foreground">Color</div>
             <div className="font-medium">{color}</div>
             <div className="text-muted-foreground">Size</div>
-            <div className="font-medium">{size_mm ? `${size_mm} mm` : ""}</div>
+            <div className="font-medium">{size_mm ? `${size_mm.toFixed(1)} mm` : ""}</div>
             <div className="text-muted-foreground">Scoring</div>
             <div className="font-medium">{scoring || "no score"}</div>
           </div>

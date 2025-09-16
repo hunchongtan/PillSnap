@@ -380,8 +380,21 @@ export function PillContribute() {
               <Label htmlFor="sizeMm">Size (mm)</Label>
               <Input
                 id="sizeMm"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step={0.1}
                 value={formData.sizeMm}
                 onChange={(e) => setFormData({ ...formData, sizeMm: e.target.value })}
+                onBlur={(e) => {
+                  const v = e.target.value
+                  if (v === "") return
+                  const n = Number.parseFloat(v)
+                  if (Number.isFinite(n) && n > 0) {
+                    const rounded = (Math.round(n * 10) / 10).toFixed(1)
+                    setFormData({ ...formData, sizeMm: rounded })
+                  }
+                }}
                 placeholder="e.g., 11.0"
               />
               {fieldErrors.sizeMm && <p className="text-xs text-destructive mt-1">{fieldErrors.sizeMm}</p>}

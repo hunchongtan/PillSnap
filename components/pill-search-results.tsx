@@ -130,7 +130,7 @@ export function PillSearchResults({ searchResult, isLoading = false, error }: Pi
                     </div>
                     <div>
                       <span className="font-medium text-card-foreground">Size:</span>
-                      <p className="text-muted-foreground">{pill.size_mm ? `${pill.size_mm}mm` : "Unknown"}</p>
+                      <p className="text-muted-foreground">{pill.size_mm ? `${pill.size_mm.toFixed(1)}mm` : "Unknown"}</p>
                     </div>
                     <div>
                       <span className="font-medium text-card-foreground">Scoring:</span>

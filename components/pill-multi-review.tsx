@@ -293,20 +293,40 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <Field label="Size (mm)" badge={forms[det.id]?.size.isAutoFilled && !forms[det.id]?.size.isEdited ? "Auto" : undefined} highlight={forms[det.id]?.size.isAutoFilled && !forms[det.id]?.size.isEdited ? "auto" : undefined}>
-                      <Select value={typeof forms[det.id]?.size.value === "number" ? String(forms[det.id]?.size.value) : ""} onValueChange={(v)=> {
-                        const num = v ? Number(v) : undefined
-                        setForms(prev => ({
-                          ...prev,
-                          [det.id]: {
-                            ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"no score",isAutoFilled:false,isEdited:false} }),
-                            size: { value: num, isAutoFilled: false, isEdited: true },
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        step={0.1}
+                        placeholder="Enter size in mm"
+                        value={typeof forms[det.id]?.size.value === "number" && (forms[det.id]?.size.value as number) > 0 ? (forms[det.id]?.size.value as number).toFixed(1) : (forms[det.id]?.size.value ?? "")}
+                        onChange={(e)=> {
+                          const v = e.target.value
+                          const num = v === "" ? undefined : Number.parseFloat(v)
+                          setForms(prev => ({
+                            ...prev,
+                            [det.id]: {
+                              ...(prev[det.id] || { front:{value:"",isAutoFilled:false,isEdited:false}, back:{value:"",isAutoFilled:false,isEdited:false}, shape:{value:"",isAutoFilled:false,isEdited:false}, color:{value:"",isAutoFilled:false,isEdited:false}, size:{value:undefined,isAutoFilled:false,isEdited:false}, scoring:{value:"no score",isAutoFilled:false,isEdited:false} }),
+                              size: { value: Number.isFinite(num as number) ? (num as number) : undefined, isAutoFilled: false, isEdited: true },
+                            }
+                          }))
+                          setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes: { ...ensureAttrs(d.attributes), size_mm: Number.isFinite(num as number) ? (num as number) : 0 } } : d))
+                        }}
+                        onBlur={(e)=>{
+                          const v = e.target.value
+                          if (v === "") return
+                          const n = Number.parseFloat(v)
+                          if (Number.isFinite(n)) {
+                            const rounded = Math.round(n * 10) / 10
+                            setForms(prev => ({
+                              ...prev,
+                              [det.id]: { ...(prev[det.id] as any), size: { value: rounded, isAutoFilled: false, isEdited: true } }
+                            }))
+                            setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes: { ...ensureAttrs(d.attributes), size_mm: rounded } } : d))
                           }
-                        }))
-                        setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes: { ...ensureAttrs(d.attributes), size_mm: num ? Number(num) : 0 } } : d))
-                      }}>
-                        <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select size (mm)"/></SelectTrigger>
-                        <SelectContent>{SIZES_MM.map(mm => <SelectItem key={mm} value={String(mm)}>{mm} mm</SelectItem>)}</SelectContent>
-                      </Select>
+                        }}
+                        className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"
+                      />
                     </Field>
                     <Field label="Scoring">
                       <Select value={forms[det.id]?.scoring.value || "no score"} onValueChange={(v)=> {

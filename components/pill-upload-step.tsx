@@ -158,15 +158,10 @@ export function PillUploadStep({ onComplete }: PillUploadStepProps) {
         return map[k]
       }
 
-      const SIZES_MM = [5,6,7,8,9,10,12]
-      const closestSize = (target?: number, options:number[] = SIZES_MM) => {
-        if (!target || target <= 0) return undefined
-        return options.reduce((a,b)=> Math.abs(b-(target as number)) < Math.abs(a-(target as number)) ? b : a)
-      }
-
     const mappedShape = mapValue(shapeMap, attrs.shape) || ""
     const mappedColor = mapValue(colorMap, attrs.color) || ""
-    const sizeVal = closestSize(typeof attrs.size_mm === "number" ? attrs.size_mm : Number(attrs.size_mm))
+    const rawSize = typeof attrs.size_mm === "number" ? attrs.size_mm : Number(attrs.size_mm)
+    const sizeVal = Number.isFinite(rawSize) && rawSize>0 ? Math.round(rawSize*10)/10 : undefined
 
   // No coating/dosage form
 

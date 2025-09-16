@@ -106,8 +106,21 @@ export function PillAttributeEditor({ initialAttributes, onSearch, isSearching =
               min="1"
               max="50"
               step="0.1"
-              value={attributes.size_mm || ""}
-              onChange={(e) => updateAttribute("size_mm", Number.parseFloat(e.target.value) || undefined)}
+              value={typeof attributes.size_mm === 'number' && attributes.size_mm > 0 ? attributes.size_mm.toFixed(1) : ""}
+              onChange={(e) => {
+                const v = e.target.value
+                if (v === "") { updateAttribute("size_mm", undefined); return }
+                const n = Number.parseFloat(v)
+                updateAttribute("size_mm", Number.isFinite(n) && n > 0 ? n : undefined)
+              }}
+              onBlur={(e) => {
+                const v = e.target.value
+                if (v === "") return
+                const n = Number.parseFloat(v)
+                if (Number.isFinite(n) && n > 0) {
+                  updateAttribute("size_mm", Math.round(n*10)/10)
+                }
+              }}
               placeholder="Enter size in mm"
               className="bg-input border-border"
             />
@@ -139,9 +152,7 @@ export function PillAttributeEditor({ initialAttributes, onSearch, isSearching =
             </SelectTrigger>
             <SelectContent>
               {CAN_SCORING.map((scoring) => (
-                <SelectItem key={scoring} value={scoring}>
-                  {scoring}
-                </SelectItem>
+                <SelectItem key={scoring} value={scoring}>{scoring}</SelectItem>
               ))}
             </SelectContent>
           </Select>

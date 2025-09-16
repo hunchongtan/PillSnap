@@ -24,8 +24,7 @@ interface PillAttributesStepProps {
   showOcrAlternatives?: boolean // Added this property
 }
 
-const SIZE_BINS = ["XS", "S", "M", "L"]
-const SIZES_MM = [5, 6, 7, 8, 9, 10, 12]
+// size input now free-form; no discrete bins
 
 export function PillAttributesStep({
   entryMode,
@@ -227,24 +226,33 @@ export function PillAttributesStep({
 
               {/* Size */}
               <div className="space-y-2">
-                <Label>Size (optional)</Label>
-                <Select
-                  value={attributes.size_mm ? String(attributes.size_mm) : ""}
-                  onValueChange={(value) =>
-                    setAttributes((prev) => ({ ...prev, size_mm: value ? Number(value) : undefined }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select size (mm)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SIZES_MM.map((mm) => (
-                      <SelectItem key={mm} value={String(mm)}>
-                        {mm} mm
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Size (mm) (optional)</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step={0.1}
+                  placeholder="Enter size in mm"
+                  value={typeof attributes.size_mm === "number" && attributes.size_mm > 0 ? attributes.size_mm.toFixed(1) : ""}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    if (v === "") {
+                      setAttributes((prev) => ({ ...prev, size_mm: undefined }))
+                    } else {
+                      const n = Number.parseFloat(v)
+                      setAttributes((prev) => ({ ...prev, size_mm: Number.isFinite(n) && n > 0 ? n : undefined }))
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const v = e.target.value
+                    if (v === "") return
+                    const n = Number.parseFloat(v)
+                    if (Number.isFinite(n) && n > 0) {
+                      const rounded = Math.round(n * 10) / 10
+                      setAttributes((prev) => ({ ...prev, size_mm: rounded }))
+                    }
+                  }}
+                />
               </div>
 
               <Button onClick={handleSubmit} className="w-full" disabled={isLoading}>

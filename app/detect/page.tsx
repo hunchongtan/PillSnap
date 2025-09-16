@@ -42,9 +42,7 @@ export type Det = {
 
 const shapeMap: Record<string,string> = { round:"Round", circle:"Round", oval:"Oval", oblong:"Oval", capsule:"Capsule", triangle:"Triangle", square:"Square", pentagon:"Pentagon", hexagon:"Hexagon", diamond:"Diamond", heart:"Heart", tear:"Teardrop", teardrop:"Teardrop" }
 const colorMap: Record<string,string> = { white:"White","off-white":"White", beige:"Beige", black:"Black", blue:"Blue", brown:"Brown", clear:"Clear", gold:"Gold", gray:"Gray", grey:"Gray", green:"Green", maroon:"Maroon", orange:"Orange", peach:"Peach", pink:"Pink", purple:"Purple", red:"Red", tan:"Tan", yellow:"Yellow" }
-const SIZES_MM = [5,6,7,8,9,10,12]
 const mapValue = (map:Record<string,string>, v?:string) => v ? map[v.toLowerCase().trim()] : undefined
-const closestSize = (target?:number, options:number[] = SIZES_MM) => !target || target<=0 ? undefined : options.reduce((a,b)=> Math.abs(b-target) < Math.abs(a-target) ? b : a)
 
 export default function DetectPage() {
   const [processing, setProcessing] = useState(false)
@@ -134,7 +132,8 @@ export default function DetectPage() {
 
           const mappedShape = mapValue(shapeMap, a.shape) || ""
           const mappedColor = mapValue(colorMap, a.color) || ""
-          const sizeVal = closestSize(typeof a.size_mm === "number" ? a.size_mm : Number(a.size_mm))
+          const rawSize = typeof a.size_mm === "number" ? a.size_mm : Number(a.size_mm)
+          const sizeVal = Number.isFinite(rawSize) && rawSize>0 ? Math.round(rawSize*10)/10 : undefined
           const attributes: Required<AnalyzeAttributes> = {
             shape: mappedShape,
             color: mappedColor,
@@ -271,12 +270,29 @@ export default function DetectPage() {
 
                   <div className="grid grid-cols-2 gap-2">
                     <Field label="Size (mm)" badge={!det.form?.size_mm.isEdited && det.form?.size_mm.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.size_mm.isEdited && det.form?.size_mm.isAutoFilled ? "auto" : undefined}>
-                      <Select value={det.form?.size_mm.value ? String(det.form.size_mm.value) : ""} onValueChange={(v)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, size_mm: { value: v ? Number(v) : undefined, isAutoFilled: false, isEdited: true }, imprint: d.form!.imprint, shape: d.form!.shape, color: d.form!.color, scoring: d.form!.scoring } } : d))}>
-                        <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select size (mm)"/></SelectTrigger>
-                        <SelectContent>
-                          {SIZES_MM.map(mm => <SelectItem key={mm} value={String(mm)}>{mm} mm</SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        step={0.1}
+                        placeholder="Enter size in mm"
+                        value={typeof det.form?.size_mm.value === 'number' && (det.form?.size_mm.value as number) > 0 ? (det.form?.size_mm.value as number).toFixed(1) : (det.form?.size_mm.value ?? "")}
+                        onChange={(e)=> {
+                          const v = e.target.value
+                          const n = v === "" ? undefined : Number.parseFloat(v)
+                          setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, size_mm: { value: Number.isFinite(n as number) ? (n as number) : undefined, isAutoFilled: false, isEdited: true }, imprint: d.form!.imprint, shape: d.form!.shape, color: d.form!.color, scoring: d.form!.scoring } } : d))
+                        }}
+                        onBlur={(e)=>{
+                          const v = e.target.value
+                          if (v === "") return
+                          const n = Number.parseFloat(v)
+                          if (Number.isFinite(n)) {
+                            const rounded = Math.round(n*10)/10
+                            setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, size_mm: { value: rounded, isAutoFilled: false, isEdited: true } } } : d))
+                          }
+                        }}
+                        className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"
+                      />
                     </Field>
                     <Field label="Scoring" badge={!det.form?.scoring.isEdited && det.form?.scoring.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.scoring.isEdited && det.form?.scoring.isAutoFilled ? "auto" : undefined}>
                       <Select value={det.form?.scoring.value || "no score"} onValueChange={(v)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, scoring: { value: v, isAutoFilled: false, isEdited: true } } } : d))}>

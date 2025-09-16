@@ -164,7 +164,7 @@ export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
                       </Badge>
                     )}
                     {typeof pill.size_mm === 'number' && (
-                      <Badge variant="outline" className="text-xs">{pill.size_mm} mm</Badge>
+                      <Badge variant="outline" className="text-xs">{pill.size_mm.toFixed(1)} mm</Badge>
                     )}
                     {pill.scoring && (
                       <Badge variant="outline" className="text-xs">{pill.scoring}</Badge>
@@ -225,7 +225,7 @@ export function PillResultsGrid({ results, isLoading }: PillResultsGridProps) {
                           )}
                           {pill.shape && (<span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">{pill.shape}</span>)}
                           {pill.color && (<span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">{pill.color}</span>)}
-                          {typeof pill.size_mm === 'number' && (<span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">{pill.size_mm} mm</span>)}
+                          {typeof pill.size_mm === 'number' && (<span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">{pill.size_mm.toFixed(1)} mm</span>)}
                           {pill.scoring && (<span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">{pill.scoring}</span>)}
                         </div>
 

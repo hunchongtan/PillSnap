@@ -111,7 +111,7 @@ export default async function PillDetailPage({ params }: { params: Promise<{ id:
                     <div className="flex flex-wrap gap-2">
                       {pill.shape && <Badge variant="outline">{pill.shape}</Badge>}
                       {pill.color && <Badge variant="outline">{pill.color}</Badge>}
-                      {typeof pill.size_mm === 'number' && <Badge variant="outline">{pill.size_mm} mm</Badge>}
+                      {typeof pill.size_mm === 'number' && <Badge variant="outline">{pill.size_mm.toFixed(1)} mm</Badge>}
                       {pill.scoring && <Badge variant="outline">{pill.scoring}</Badge>}
                     </div>
                   </div>
