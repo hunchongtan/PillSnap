@@ -1,16 +1,28 @@
-import { COLOR_OPTIONS, ColorOption, SCORING_OPTIONS, ScoringOption, SHAPE_OPTIONS, ShapeOption } from '@/constants/pill-options'
+import {
+  COLOR_OPTIONS,
+  ColorOption,
+  SCORING_OPTIONS,
+  ScoringOption,
+  SHAPE_OPTIONS,
+  ShapeOption,
+} from '@/constants/pill-options'
 
 export function normalizeShape(input?: string): ShapeOption | '' {
   const s = (input || '').toLowerCase().trim()
   if (!s) return ''
-  const direct = (SHAPE_OPTIONS as readonly string[]).find(o => o.toLowerCase() === s)
+  const direct = (SHAPE_OPTIONS as readonly string[]).find((o) => o.toLowerCase() === s)
   if (direct) return direct as ShapeOption
   const map: Record<string, ShapeOption> = {
-    round: 'Round', circle: 'Round',
+    round: 'Round',
+    circle: 'Round',
     oval: 'Oval',
-    oblong: 'Capsule/Oblong', capsule: 'Capsule/Oblong', 'capsule/oblong': 'Capsule/Oblong',
-    rectangle: 'Rectangle', rectangular: 'Rectangle',
-    barrel: 'Barrel', drum: 'Barrel'
+    oblong: 'Capsule/Oblong',
+    capsule: 'Capsule/Oblong',
+    'capsule/oblong': 'Capsule/Oblong',
+    rectangle: 'Rectangle',
+    rectangular: 'Rectangle',
+    barrel: 'Barrel',
+    drum: 'Barrel',
   }
   return (map[s] as ShapeOption) || ''
 }
