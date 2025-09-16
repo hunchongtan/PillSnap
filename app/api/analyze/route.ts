@@ -23,7 +23,7 @@ const PillAttributesSchema = z
     color: z.enum(COLOR_OPTIONS).or(z.literal('')).default(''),
     size_mm: z.coerce.number().min(0).default(0),
     imprint: z.string().default(''),
-  scoring: z.enum(SCORING_OPTIONS).default('no score'),
+    scoring: z.enum(SCORING_OPTIONS).default('no score'),
   })
   .strict()
 
