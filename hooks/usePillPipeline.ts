@@ -111,7 +111,7 @@ export function usePillPipeline() {
       const fd = new FormData()
       fd.append('file', file)
       const segRes = await fetch('/api/segment', { method: 'POST', body: fd })
-      if (!segRes.ok) throw new Error('Segmentation failed')
+      if (!segRes.ok) throw new Error('Segmentation failed. Try again with a clearer image of the pill(s).')
       const segJson = (await segRes.json()) as SegmentResponse
       const W = segJson.image?.width ?? 0
       const H = segJson.image?.height ?? 0
@@ -119,8 +119,8 @@ export function usePillPipeline() {
       const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(v, max))
 
       // Filter and map predictions
-      const predictions = (segJson.predictions || []).filter((p) => (p.confidence ?? 0) >= 0.6)
-      if (!predictions.length) throw new Error('No pills detected with confidence ≥ 0.6')
+      const predictions = (segJson.predictions || []).filter((p) => (p.confidence ?? 0) >= 0.3)
+      if (!predictions.length) throw new Error('No pills detected. Try again with a clearer image of the pill(s).')
 
       const mapped: Det[] = predictions.map((p, i) => {
         const left = Math.round(p.x - p.width / 2)

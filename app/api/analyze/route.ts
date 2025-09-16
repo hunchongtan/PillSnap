@@ -16,6 +16,62 @@ function isErrorWithProps(
   return typeof e === 'object' && e !== null
 }
 
+// === Normalization helpers ===
+const allowedSinglesLower = new Set(
+  COLOR_OPTIONS.filter((c) => !c.includes('&')).map((c) => c.toLowerCase())
+)
+const allowedTwoToneOtherLower = new Set(
+  COLOR_OPTIONS.filter((c) => c.includes('&'))
+    .map((c) => c.toLowerCase())
+    .map((c) => c.replace(/\s*&\s*white\s*$/i, '').trim())
+    .filter((c) => c && c !== 'white')
+)
+
+function normalizeColor(input: unknown): string {
+  if (typeof input !== 'string') return ''
+  let s = input.trim()
+  if (!s) return ''
+  // Normalize separators to ' & '
+  s = s.replace(/[\/|,-]/g, ' & ')
+  s = s.replace(/\s+/g, ' ').replace(/\s*&\s*/g, ' & ')
+  const lower = s.toLowerCase()
+
+  // Exact single match
+  if (allowedSinglesLower.has(lower)) {
+    const match = COLOR_OPTIONS.find((c) => c.toLowerCase() === lower)
+    return match || ''
+  }
+
+  // Handle two-tone with White + allowed other color (normalized to "Color & White")
+  const parts = lower.split('&').map((p) => p.trim()).filter(Boolean)
+  if (parts.length >= 2) {
+    const hasWhite = parts.includes('white')
+    if (hasWhite) {
+      const other = parts.find((p) => p !== 'white')
+      if (other && allowedTwoToneOtherLower.has(other)) {
+        const formatted = `${other.charAt(0).toUpperCase()}${other.slice(1)} & White`
+        const match = COLOR_OPTIONS.find((c) => c.toLowerCase() === formatted.toLowerCase())
+        return match || ''
+      }
+    }
+  }
+  return ''
+}
+
+function normalizeShape(input: unknown): string {
+  if (typeof input !== 'string') return ''
+  const lower = input.trim().toLowerCase()
+  const match = SHAPE_OPTIONS.find((s) => s.toLowerCase() === lower)
+  return match || ''
+}
+
+function normalizeScoring(input: unknown): string {
+  if (typeof input !== 'string') return 'no score'
+  const lower = input.trim().toLowerCase()
+  const match = SCORING_OPTIONS.find((s) => s.toLowerCase() === lower)
+  return match || 'no score'
+}
+
 // === Schema: attributes-only ===
 const PillAttributesSchema = z
   .object({
@@ -110,7 +166,13 @@ export async function POST(request: NextRequest) {
     })
 
     const raw = resp.choices[0]?.message?.content ?? '{}'
-    const parsed = OutputSchema.parse(JSON.parse(raw))
+    const obj = JSON.parse(raw) as any
+    obj.attributes = obj.attributes ?? {}
+    obj.attributes.color = normalizeColor(obj.attributes.color)
+    obj.attributes.shape = normalizeShape(obj.attributes.shape)
+    obj.attributes.scoring = normalizeScoring(obj.attributes.scoring)
+    if (typeof obj.attributes.imprint !== 'string') obj.attributes.imprint = ''
+    const parsed = OutputSchema.parse(obj)
     if (parsed?.attributes?.size_mm && Number.isFinite(parsed.attributes.size_mm)) {
       parsed.attributes.size_mm = Math.round(parsed.attributes.size_mm * 10) / 10
     }

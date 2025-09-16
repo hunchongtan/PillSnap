@@ -1,4 +1,4 @@
-import { saveUserSearch, searchPills } from '@/lib/database'
+import { saveUserSearch, searchPills, searchPillsAny } from '@/lib/database'
 import { type NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -9,6 +9,7 @@ const AttributesSchema = z.object({
   color: z.string().optional(),
   imprint: z.string().optional(),
   size_mm: z.number().optional(),
+  scoring: z.string().optional(),
 })
 
 const BodySchema = z.object({
@@ -22,18 +23,44 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid search payload' }, { status: 400 })
     }
-    const { attributes, sessionId } = parsed.data
+  const { attributes, sessionId } = parsed.data
 
-    // Search the database using the provided attributes
-    const searchResults = await searchPills({
+    // Primary (AND) search
+    const strictResults = await searchPills({
       shape: attributes.shape,
       color: attributes.color,
       imprint: attributes.imprint,
       size_mm: attributes.size_mm,
+      scoring: attributes.scoring,
     })
 
+    // Broader (OR) fallback for any single attribute match to surface partial matches
+    const broadResults = await searchPillsAny({
+      shape: attributes.shape,
+      color: attributes.color,
+      imprint: attributes.imprint,
+      scoring: attributes.scoring,
+    })
+
+    // Merge and de-duplicate by id (prefer strict result object reference)
+    const mergedMap = new Map<string, any>()
+    for (const p of strictResults) mergedMap.set(p.id, p)
+    for (const p of broadResults) if (!mergedMap.has(p.id)) mergedMap.set(p.id, p)
+    const merged = Array.from(mergedMap.values())
+
+    // Enrich each pill with a per-pill confidence (0..1)
+    const enriched = merged
+      .map(pill => ({
+        ...pill,
+        confidence: computePillMatchConfidence(pill, attributes)
+      }))
+      // Keep only pills with at least one attribute contributing (>0)
+      .filter(p => (p.confidence ?? 0) > 0)
+      // Sort by confidence descending
+      .sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))
+
     // Calculate confidence score based on attribute matches
-    const confidenceScore = calculateSearchConfidence(attributes, searchResults)
+  const confidenceScore = calculateAggregateConfidence(attributes, enriched)
 
     // Save the search to user_searches table for analytics
     const searchRecord = await saveUserSearch({
@@ -44,17 +71,17 @@ export async function POST(request: NextRequest) {
       user_confirmed_shape: attributes.shape,
       user_confirmed_color: attributes.color,
       user_confirmed_imprint: attributes.imprint,
-      matched_pill_ids: searchResults.map((pill) => pill.id),
+  matched_pill_ids: enriched.map((pill) => pill.id),
       confidence_score: confidenceScore,
       session_id: sessionId || generateSessionId(),
       user_agent: request.headers.get('user-agent') || undefined,
     })
 
     return NextResponse.json({
-      results: searchResults,
+      results: enriched,
       confidence: confidenceScore,
       searchId: searchRecord.id,
-      totalResults: searchResults.length,
+      totalResults: enriched.length,
     })
   } catch (error) {
     console.error('[search/pills] API error')
@@ -67,28 +94,90 @@ type MinimalAttrs = {
   color?: string
   imprint?: string
   size_mm?: number
+  scoring?: string
 }
 
-function calculateSearchConfidence(attributes: MinimalAttrs, results: any[]): number {
-  if (results.length === 0) return 0
+// Per-pill confidence weighting
+// Weights sum to 1.0 (imprint carries the most discriminative power)
+const WEIGHTS = {
+  imprint: 0.45,
+  shape: 0.2,
+  color: 0.15,
+  size_mm: 0.1,
+  scoring: 0.1,
+} as const
 
-  // Base confidence on number of matching attributes and result count
-  let confidence = 0.3 // Base confidence
+function computePillMatchConfidence(pill: any, attrs: MinimalAttrs): number {
+  // New logic: baseline is TOTAL_WEIGHT (all attributes). Missing attributes count as zero contribution.
+  const TOTAL_WEIGHT = WEIGHTS.imprint + WEIGHTS.shape + WEIGHTS.color + WEIGHTS.size_mm + WEIGHTS.scoring
+  let matchedWeight = 0
+  let consideredWeight = 0 // weights for attributes the user actually supplied (for a secondary boost)
 
-  // Add confidence for each matching attribute
-  if (attributes.shape) confidence += 0.2
-  if (attributes.color) confidence += 0.2
-  if (attributes.imprint) confidence += 0.25
-  if (attributes.size_mm) confidence += 0.05
+  const norm = (v?: string) => (v || '').trim().toLowerCase()
 
-  // Reduce confidence if too many results (less specific)
-  if (results.length > 10) confidence *= 0.8
-  else if (results.length > 5) confidence *= 0.9
+  // Imprint
+  const pillImprint = norm(pill.imprint)
+  const qImprint = norm(attrs.imprint)
+  if (qImprint) {
+    consideredWeight += WEIGHTS.imprint
+    if (pillImprint && (pillImprint === qImprint || pillImprint.includes(qImprint))) {
+      matchedWeight += WEIGHTS.imprint
+    }
+  }
 
-  // Boost confidence for exact matches (fewer results)
-  if (results.length <= 3) confidence *= 1.1
+  // Shape
+  const pillShape = norm(pill.shape)
+  const qShape = norm(attrs.shape)
+  if (qShape) {
+    consideredWeight += WEIGHTS.shape
+    if (pillShape === qShape) matchedWeight += WEIGHTS.shape
+  }
 
-  return Math.min(confidence, 1.0)
+  // Color
+  const pillColor = norm(pill.color)
+  const qColor = norm(attrs.color)
+  if (qColor) {
+    consideredWeight += WEIGHTS.color
+    if (pillColor === qColor) matchedWeight += WEIGHTS.color
+  }
+
+  // Size
+  if (typeof attrs.size_mm === 'number' && attrs.size_mm > 0) {
+    consideredWeight += WEIGHTS.size_mm
+    if (typeof pill.size_mm === 'number' && pill.size_mm > 0) {
+      const diff = Math.abs(pill.size_mm - attrs.size_mm)
+      const sizeScore = diff <= 0.5 ? 1 : diff >= 2 ? 0 : 1 - (diff - 0.5) / (2 - 0.5)
+      matchedWeight += WEIGHTS.size_mm * sizeScore
+    }
+  }
+
+  // Scoring
+  const pillScoring = norm(pill.scoring)
+  const qScoring = norm(attrs.scoring)
+  if (qScoring) {
+    consideredWeight += WEIGHTS.scoring
+    if (pillScoring === qScoring) matchedWeight += WEIGHTS.scoring
+  }
+
+  if (consideredWeight === 0) return 0
+
+  // Primary ratio: matched vs total possible (penalizes missing attributes)
+  const coverageRatio = matchedWeight / TOTAL_WEIGHT
+  // Secondary ratio: how well we matched among only what user provided
+  const providedQuality = matchedWeight / consideredWeight
+  // Blend (favor actual match quality but still account for missing attributes)
+  const blended = coverageRatio * 0.55 + providedQuality * 0.45
+  return Math.min(1, blended)
+}
+
+function calculateAggregateConfidence(attributes: MinimalAttrs, results: Array<{ confidence?: number }>): number {
+  if (!results.length) return 0
+  const confidences = results.map(r => typeof r.confidence === 'number' ? r.confidence : 0)
+  const max = Math.max(...confidences)
+  const avg = confidences.reduce((a,b)=>a+b,0) / confidences.length
+  // Blend: 60% weight on best match, 40% on average to reflect both specificity and overall quality
+  const blended = max * 0.6 + avg * 0.4
+  return Math.min(1, blended)
 }
 
 function generateSessionId(): string {

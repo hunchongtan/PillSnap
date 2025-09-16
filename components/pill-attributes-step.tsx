@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -37,14 +37,40 @@ export function PillAttributesStep({
   const [attributes, setAttributes] = useState<ExtractedPillAttributes>(
     () => initialAttributes || { confidence: 0, reasoning: "" }
   )
-  const [imprintWarning, setImprintWarning] = useState(false)
+  const [validationError, setValidationError] = useState<string | null>(null)
   const [ocrAlternatives, setOcrAlternatives] = useState<{ imprint?: string[] }>({})
+  const [aiSuggested, setAiSuggested] = useState<{
+    imprint?: boolean
+    shape?: boolean
+    color?: boolean
+    size_mm?: boolean
+    scoring?: boolean
+  }>({})
+
+  useEffect(() => {
+    if (initialAttributes) {
+      setAiSuggested({
+        imprint: !!initialAttributes.imprint,
+        shape: !!initialAttributes.shape,
+        color: !!initialAttributes.color,
+        size_mm: typeof initialAttributes.size_mm === "number" && initialAttributes.size_mm > 0,
+        scoring: !!initialAttributes.scoring,
+      })
+    }
+  }, [initialAttributes])
 
   const handlePhotoAnalysis = (analyzedAttributes: ExtractedPillAttributes, imageUrl?: string) => {
     setAttributes(analyzedAttributes)
     if (imageUrl) {
       setPillImages([imageUrl])
     }
+    setAiSuggested({
+      imprint: !!analyzedAttributes.imprint,
+      shape: !!analyzedAttributes.shape,
+      color: !!analyzedAttributes.color,
+      size_mm: typeof analyzedAttributes.size_mm === "number" && analyzedAttributes.size_mm > 0,
+      scoring: !!analyzedAttributes.scoring,
+    })
     // Set OCR alternatives for photo mode
     setOcrAlternatives({
       imprint: ["B10", "810", "8IO", "BIO", "20", "ZO", "2O"],
@@ -53,20 +79,22 @@ export function PillAttributesStep({
 
   const handleManualEntry = (manualAttributes: ExtractedPillAttributes) => {
     setAttributes(manualAttributes)
+    setAiSuggested({})
   }
 
   const handleSubmit = () => {
-    if (!attributes.imprint) {
-      setImprintWarning(true)
-    } else {
-      setImprintWarning(false)
-      onComplete(attributes)
+    if (!attributes.shape || !attributes.color) {
+      setValidationError("Shape and color are required to search.")
+      return
     }
+    setValidationError(null)
+    onComplete(attributes)
   }
 
   const handleImprintSelect = (value: string) => {
     setAttributes((prev) => ({ ...prev, imprint: value }))
-    setImprintWarning(false)
+    setAiSuggested((prev) => ({ ...prev, imprint: false }))
+    setValidationError(null)
   }
 
   // Show upload/manual entry first if no attributes yet
@@ -124,12 +152,21 @@ export function PillAttributesStep({
 
               {/* Imprint Field */}
               <div className="space-y-2">
-                <Label htmlFor="imprint">Imprint</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="imprint">Imprint</Label>
+                  {aiSuggested.imprint && (
+                    <Badge className="bg-green-100 text-green-800 border-green-200">AI suggested</Badge>
+                  )}
+                </div>
                 <Input
                   id="imprint"
                   value={attributes.imprint || ""}
-                  onChange={(e) => setAttributes((prev) => ({ ...prev, imprint: e.target.value }))}
-                  placeholder="Enter text/numbers on pill"
+                  onChange={(e) => {
+                    setAttributes((prev) => ({ ...prev, imprint: e.target.value }))
+                    setAiSuggested((prev) => ({ ...prev, imprint: false }))
+                    setValidationError(null)
+                  }}
+                  placeholder="Optional"
                 />
                 {ocrAlternatives.imprint && (
                   <div className="space-y-1">
@@ -150,11 +187,11 @@ export function PillAttributesStep({
                 )}
               </div>
 
-              {imprintWarning && (
+              {validationError && (
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    Please enter the imprint for better search results.
+                    {validationError}
                   </AlertDescription>
                 </Alert>
               )}
@@ -162,10 +199,19 @@ export function PillAttributesStep({
               {/* Shape and Color */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Shape</Label>
+                  <div className="flex items-center gap-2">
+                    <Label>Shape*</Label>
+                    {aiSuggested.shape && (
+                      <Badge className="bg-green-100 text-green-800 border-green-200">AI suggested</Badge>
+                    )}
+                  </div>
                   <Select
                     value={attributes.shape || ""}
-                    onValueChange={(value) => setAttributes((prev) => ({ ...prev, shape: value }))}
+                    onValueChange={(value) => {
+                      setAttributes((prev) => ({ ...prev, shape: value }))
+                      setAiSuggested((prev) => ({ ...prev, shape: false }))
+                      setValidationError(null)
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select shape" />
@@ -181,10 +227,19 @@ export function PillAttributesStep({
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Color</Label>
+                  <div className="flex items-center gap-2">
+                    <Label>Color*</Label>
+                    {aiSuggested.color && (
+                      <Badge className="bg-green-100 text-green-800 border-green-200">AI suggested</Badge>
+                    )}
+                  </div>
                   <Select
                     value={attributes.color || ""}
-                    onValueChange={(value) => setAttributes((prev) => ({ ...prev, color: value }))}
+                    onValueChange={(value) => {
+                      setAttributes((prev) => ({ ...prev, color: value }))
+                      setAiSuggested((prev) => ({ ...prev, color: false }))
+                      setValidationError(null)
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select color" />
@@ -206,13 +261,22 @@ export function PillAttributesStep({
 
               {/* Scoring Dropdown */}
               <div className="space-y-2">
-                <Label>Scoring</Label>
+                <div className="flex items-center gap-2">
+                  <Label>Scoring</Label>
+                  {aiSuggested.scoring && (
+                    <Badge className="bg-green-100 text-green-800 border-green-200">AI suggested</Badge>
+                  )}
+                </div>
                 <Select
-                  value={attributes.scoring || "no score"}
-                  onValueChange={(value) => setAttributes((prev) => ({ ...prev, scoring: value }))}
+                  value={attributes.scoring || ""}
+                  onValueChange={(value) => {
+                    setAttributes((prev) => ({ ...prev, scoring: value }))
+                    setAiSuggested((prev) => ({ ...prev, scoring: false }))
+                    setValidationError(null)
+                  }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select scoring" />
+                    <SelectValue placeholder="Optional" />
                   </SelectTrigger>
                   <SelectContent>
                     {SCORING_OPTIONS.map((s) => (
@@ -226,21 +290,30 @@ export function PillAttributesStep({
 
               {/* Size */}
               <div className="space-y-2">
-                <Label>Size (mm) (optional)</Label>
+                <div className="flex items-center gap-2">
+                  <Label>Size (mm)</Label>
+                  {aiSuggested.size_mm && (
+                    <Badge className="bg-green-100 text-green-800 border-green-200">AI suggested</Badge>
+                  )}
+                </div>
                 <Input
                   type="number"
                   inputMode="decimal"
                   min={0}
                   step={0.1}
-                  placeholder="Enter size in mm"
+                  placeholder="Optional"
                   value={typeof attributes.size_mm === "number" && attributes.size_mm > 0 ? attributes.size_mm.toFixed(1) : ""}
                   onChange={(e) => {
                     const v = e.target.value
                     if (v === "") {
                       setAttributes((prev) => ({ ...prev, size_mm: undefined }))
+                      setAiSuggested((prev) => ({ ...prev, size_mm: false }))
+                      setValidationError(null)
                     } else {
                       const n = Number.parseFloat(v)
                       setAttributes((prev) => ({ ...prev, size_mm: Number.isFinite(n) && n > 0 ? n : undefined }))
+                      setAiSuggested((prev) => ({ ...prev, size_mm: false }))
+                      setValidationError(null)
                     }
                   }}
                   onBlur={(e) => {

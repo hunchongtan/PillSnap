@@ -73,8 +73,8 @@ export default function DetectPage() {
       const segRes = await fetch("/api/segment", { method: "POST", body: form })
       if (!segRes.ok) throw new Error("Segmentation failed")
       const segJson = (await segRes.json()) as SegmentResponse
-      const predictions = (segJson.predictions || []).filter(p => (p.confidence ?? 0) >= 0.6)
-      if (!predictions.length) throw new Error("No pills detected with confidence ≥ 0.6")
+  const predictions = (segJson.predictions || []).filter(p => (p.confidence ?? 0) >= 0.3)
+  if (!predictions.length) throw new Error("No pills detected with confidence ≥ 0.3")
       // Convert center coords to top-left and clamp to image bounds
       const imgW = segJson.image?.width ?? 0
       const imgH = segJson.image?.height ?? 0
@@ -169,10 +169,9 @@ export default function DetectPage() {
   }
 
   const idsCsv = dets.map(d=>d.id).join(",")
-  const [showAll, setShowAll] = useState(false)
 
   // Field UI wrapper
-  function Field({ label, badge, children, highlight }: { label: string; badge?: "Auto" | "Check"; children: React.ReactNode; highlight?: "auto" | "warn" | "error" }) {
+  function Field({ label, badge, children, highlight }: { label: string; badge?: "Auto" | "Check" | "AI suggested"; children: React.ReactNode; highlight?: "auto" | "warn" | "error" }) {
     const ring = highlight === "auto" ? "ring-2 ring-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/30" : highlight === "warn" ? "ring-2 ring-amber-400/60 bg-amber-50 dark:bg-amber-950/30" : highlight === "error" ? "ring-2 ring-rose-500/70 bg-rose-50 dark:bg-rose-950/30" : ""
     return (
       <div className={`space-y-1 transition-colors duration-150 ${ring} rounded-lg p-2`}>
@@ -228,7 +227,7 @@ export default function DetectPage() {
 
       {dets.length>0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {(showAll ? dets : dets.slice(0, 4)).map((det, idx) => (
+          {dets.map((det, idx) => (
             <Card key={det.id} className="bg-card border-border">
               <CardContent className="p-4 space-y-3">
                 <div className="w-full aspect-square bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm overflow-hidden flex items-center justify-center">
@@ -238,19 +237,25 @@ export default function DetectPage() {
                     <div className="text-xs text-muted-foreground flex items-center gap-1"><ImageIcon className="w-4 h-4"/>Waiting for crop…</div>
                   )}
                 </div>
-                {det.error && <Alert variant="destructive"><AlertDescription>{det.error}</AlertDescription></Alert>}
+                {det.error && (
+                  <div className="flex items-center gap-2">
+                    <Alert variant="destructive" className="flex-1"><AlertDescription>{det.error}</AlertDescription></Alert>
+                    <Button variant="outline" size="sm" onClick={() => { if (originalFileRef.current) runPipeline(originalFileRef.current) }}>Try again</Button>
+                  </div>
+                )}
                 {/* Editable form */}
                 <div className="space-y-3">
-                  <Field label="Imprint" badge={!det.form?.imprint.isEdited && det.form?.imprint.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.imprint.isEdited && det.form?.imprint.isAutoFilled ? "auto" : undefined}>
+                  <Field label="Imprint" badge={!det.form?.imprint.isEdited && det.form?.imprint.isAutoFilled ? "AI suggested" : undefined} highlight={!det.form?.imprint.isEdited && det.form?.imprint.isAutoFilled ? "auto" : undefined}>
                     <Input
                       className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"
                       value={det.form?.imprint.value || ""}
+                      placeholder="Optional"
                       onChange={(e)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, imprint: { value: e.target.value, isAutoFilled: false, isEdited: true }, shape: d.form!.shape, color: d.form!.color, size_mm: d.form!.size_mm, scoring: d.form!.scoring } } : d))}
                     />
                   </Field>
 
                   <div className="grid grid-cols-2 gap-2">
-                    <Field label="Shape" badge={!det.form?.shape.isEdited && det.form?.shape.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.shape.isEdited && det.form?.shape.isAutoFilled ? "auto" : undefined}>
+                    <Field label="Shape*" badge={!det.form?.shape.isEdited && det.form?.shape.isAutoFilled ? "AI suggested" : undefined} highlight={!det.form?.shape.isEdited && det.form?.shape.isAutoFilled ? "auto" : undefined}>
                       <Select value={det.form?.shape.value || ""} onValueChange={(v)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, shape: { value: v, isAutoFilled: false, isEdited: true }, imprint: d.form!.imprint, color: d.form!.color, size_mm: d.form!.size_mm, scoring: d.form!.scoring } } : d))}>
                         <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select shape"/></SelectTrigger>
                         <SelectContent>
@@ -258,7 +263,7 @@ export default function DetectPage() {
                         </SelectContent>
                       </Select>
                     </Field>
-                    <Field label="Color" badge={!det.form?.color.isEdited && det.form?.color.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.color.isEdited && det.form?.color.isAutoFilled ? "auto" : undefined}>
+                    <Field label="Color*" badge={!det.form?.color.isEdited && det.form?.color.isAutoFilled ? "AI suggested" : undefined} highlight={!det.form?.color.isEdited && det.form?.color.isAutoFilled ? "auto" : undefined}>
                       <Select value={det.form?.color.value || ""} onValueChange={(v)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, color: { value: v, isAutoFilled: false, isEdited: true }, imprint: d.form!.imprint, shape: d.form!.shape, size_mm: d.form!.size_mm, scoring: d.form!.scoring } } : d))}>
                         <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select color"/></SelectTrigger>
                         <SelectContent>
@@ -269,13 +274,13 @@ export default function DetectPage() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
-                    <Field label="Size (mm)" badge={!det.form?.size_mm.isEdited && det.form?.size_mm.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.size_mm.isEdited && det.form?.size_mm.isAutoFilled ? "auto" : undefined}>
+                    <Field label="Size (mm)" badge={!det.form?.size_mm.isEdited && det.form?.size_mm.isAutoFilled ? "AI suggested" : undefined} highlight={!det.form?.size_mm.isEdited && det.form?.size_mm.isAutoFilled ? "auto" : undefined}>
                       <Input
                         type="number"
                         inputMode="decimal"
                         min={0}
                         step={0.1}
-                        placeholder="Enter size in mm"
+                        placeholder="Optional"
                         value={typeof det.form?.size_mm.value === 'number' && (det.form?.size_mm.value as number) > 0 ? (det.form?.size_mm.value as number).toFixed(1) : (det.form?.size_mm.value ?? "")}
                         onChange={(e)=> {
                           const v = e.target.value
@@ -294,9 +299,9 @@ export default function DetectPage() {
                         className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"
                       />
                     </Field>
-                    <Field label="Scoring" badge={!det.form?.scoring.isEdited && det.form?.scoring.isAutoFilled ? "Auto" : undefined} highlight={!det.form?.scoring.isEdited && det.form?.scoring.isAutoFilled ? "auto" : undefined}>
+                    <Field label="Scoring" badge={!det.form?.scoring.isEdited && det.form?.scoring.isAutoFilled ? "AI suggested" : undefined} highlight={!det.form?.scoring.isEdited && det.form?.scoring.isAutoFilled ? "auto" : undefined}>
                       <Select value={det.form?.scoring.value || "no score"} onValueChange={(v)=> setDets(prev => prev.map(d => d.id===det.id ? { ...d, form: { ...d.form!, scoring: { value: v, isAutoFilled: false, isEdited: true } } } : d))}>
-                        <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select scoring"/></SelectTrigger>
+                        <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Optional"/></SelectTrigger>
                         <SelectContent>
                           {["no score","1 score","2 scores"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                         </SelectContent>
@@ -317,11 +322,7 @@ export default function DetectPage() {
         </div>
       )}
 
-      {dets.length>4 && !showAll && (
-        <div className="text-center">
-          <Button variant="ghost" onClick={() => setShowAll(true)}>Show more</Button>
-        </div>
-      )}
+      {/* Show more removed; render all detections */}
     </div>
   )
 }

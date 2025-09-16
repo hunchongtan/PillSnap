@@ -39,6 +39,7 @@ export async function searchPills(attributes: {
   color?: string
   imprint?: string
   size_mm?: number
+  scoring?: string
 }) {
   const supabase = await createClient()
 
@@ -58,6 +59,9 @@ export async function searchPills(attributes: {
     // Allow for 2mm tolerance in size matching
     query = query.gte('size_mm', attributes.size_mm - 2).lte('size_mm', attributes.size_mm + 2)
   }
+  if (attributes.scoring) {
+    query = query.ilike('scoring', `%${attributes.scoring}%`)
+  }
 
   const { data, error } = await query.limit(20)
 
@@ -65,6 +69,42 @@ export async function searchPills(attributes: {
     throw new Error(`Database search failed: ${error.message}`)
   }
 
+  return data as Pill[]
+}
+
+// Broader search: returns pills matching ANY of the provided attributes (OR semantics) to surface partial matches.
+export async function searchPillsAny(attributes: {
+  shape?: string
+  color?: string
+  imprint?: string
+  scoring?: string
+}) {
+  const supabase = await createClient()
+  const conditions: string[] = []
+  const params: any = {}
+
+  // Build a dynamic OR filter using ilike for text attributes
+  if (attributes.shape) {
+    conditions.push(`shape.ilike.%${attributes.shape}%`)
+  }
+  if (attributes.color) {
+    conditions.push(`color.ilike.%${attributes.color}%`)
+  }
+  if (attributes.imprint) {
+    conditions.push(`imprint.ilike.%${attributes.imprint}%`)
+  }
+  if (attributes.scoring) {
+    conditions.push(`scoring.ilike.%${attributes.scoring}%`)
+  }
+
+  if (conditions.length === 0) return []
+
+  // Supabase JS client lacks a direct high-level OR builder for ilike chains; use .or() with comma-separated filters
+  const orFilter = conditions.join(',')
+  const { data, error } = await supabase.from('pills').select('*').or(orFilter).limit(40)
+  if (error) {
+    throw new Error(`Database broad search failed: ${error.message}`)
+  }
   return data as Pill[]
 }
 

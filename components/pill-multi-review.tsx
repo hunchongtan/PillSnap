@@ -38,7 +38,7 @@ interface FormState {
 }
 
 function Field(
-  { label, badge, children, highlight }: { label: string; badge?: "Auto" | "Check"; children: React.ReactNode; highlight?: "auto" | "warn" | "error" }
+  { label, badge, children, highlight }: { label: string; badge?: "Auto" | "Check" | "AI suggested"; children: React.ReactNode; highlight?: "auto" | "warn" | "error" }
 ) {
   const ringClass =
     highlight === "auto"
@@ -66,9 +66,12 @@ function Field(
 type FlowStep = 1 | 2 | 3
 export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step: FlowStep) => void }) {
   const { dets, processing, error, run, setDets, updateDet } = usePillPipeline()
+  // Show all detections; pagination removed
   const [showAll, setShowAll] = useState(false)
+  const [lastFile, setLastFile] = useState<File | null>(null)
   const [uploaded, setUploaded] = useState(false)
   const [forms, setForms] = useState<Record<string, FormState>>({})
+  const [validationErrors, setValidationErrors] = useState<Record<string, string | undefined>>({})
   const [step, setStep] = useState<FlowStep>(1)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showWebcam, setShowWebcam] = useState(false)
@@ -77,7 +80,8 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
   const handleCapture = (dataUrl: string) => {
     setShowWebcam(false)
     try {
-      const f = dataURLtoFile(dataUrl)
+  const f = dataURLtoFile(dataUrl)
+  setLastFile(f)
       setUploaded(true)
       run(f)
       setStep(2)
@@ -137,15 +141,16 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
         const a = ensureAttrs(d.attributes)
         const normShape = mapValue(shapeMap, a.shape) || a.shape || ""
         const normColor = mapValue(colorMap, a.color) || a.color || ""
-        const sizeVal = a.size_mm ? closestSize(a.size_mm) : undefined
-  const scoringVal = a.scoring && a.scoring !== "unclear" ? a.scoring : "no score"
-  const imprintVal = a.imprint && a.imprint !== "unclear" ? a.imprint : ""
+    const sizeVal = a.size_mm ? closestSize(a.size_mm) : undefined
+    const rawScoring = a.scoring
+    const scoringVal = rawScoring && rawScoring !== "unclear" ? rawScoring : "no score"
+    const imprintVal = a.imprint && a.imprint !== "unclear" ? a.imprint : ""
         next[d.id] = {
           imprint: { value: imprintVal, isAutoFilled: !!imprintVal, isEdited: false },
           shape: { value: normShape, isAutoFilled: !!normShape, isEdited: false },
           color: { value: normColor, isAutoFilled: !!normColor, isEdited: false },
           size: { value: sizeVal, isAutoFilled: typeof sizeVal === "number", isEdited: false },
-          scoring: { value: scoringVal, isAutoFilled: scoringVal !== "no score", isEdited: false },
+          scoring: { value: scoringVal, isAutoFilled: true, isEdited: false },
         }
       }
       return next
@@ -158,6 +163,7 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
     onDrop: (files) => {
       const f = files[0]
       if (f) {
+        setLastFile(f)
         setUploaded(true)
         run(f)
         setStep(2)
@@ -211,7 +217,28 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
         </div>
       )}
 
-      {error && step!==3 && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
+      {error && step!==3 && (
+        <div className="flex items-center gap-3">
+          <Alert variant="destructive" className="flex-1"><AlertDescription>{error}</AlertDescription></Alert>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              if (lastFile) {
+                setDets([])
+                setUploaded(true)
+                run(lastFile)
+                setStep(2)
+              } else {
+                setDets([])
+                setUploaded(false)
+                setStep(1)
+              }
+            }}
+          >
+            Try again
+          </Button>
+        </div>
+      )}
 
       {step===2 && uploaded && dets.length>0 && (
         <div className="flex items-center gap-2">
@@ -228,7 +255,7 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
 
       {step===2 && dets.length>0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {(showAll ? dets : dets.slice(0, 3)).map((det, idx) => (
+          {dets.map((det, idx) => (
             <Card key={det.id} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-md rounded-2xl">
               <CardContent className="p-4 space-y-3">
                 <div className="w-full aspect-square bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm overflow-hidden flex items-center justify-center">
@@ -238,11 +265,38 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                     <div className="text-xs text-muted-foreground">Waiting for crop…</div>
                   )}
                 </div>
+                {det.error && (
+                  <div className="flex items-center gap-2">
+                    <Alert variant="destructive" className="flex-1"><AlertDescription>{det.error}</AlertDescription></Alert>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (lastFile) {
+                          setDets([])
+                          setUploaded(true)
+                          run(lastFile)
+                          setStep(2)
+                        } else {
+                          setDets([])
+                          setUploaded(false)
+                          setStep(1)
+                        }
+                      }}
+                    >
+                      Try again
+                    </Button>
+                  </div>
+                )}
 
                 {/* Form fields with autofill highlights */}
                 <div className="space-y-3">
-                  <Field label="Imprint" badge={forms[det.id]?.imprint.isAutoFilled && !forms[det.id]?.imprint.isEdited ? "Auto" : undefined} highlight={forms[det.id]?.imprint.isAutoFilled && !forms[det.id]?.imprint.isEdited ? "auto" : undefined}>
-                    <Input className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm" value={forms[det.id]?.imprint.value || ""} onChange={(e)=> {
+                  <Field label="Imprint" badge={forms[det.id]?.imprint.isAutoFilled && !forms[det.id]?.imprint.isEdited ? "AI suggested" : undefined} highlight={forms[det.id]?.imprint.isAutoFilled && !forms[det.id]?.imprint.isEdited ? "auto" : undefined}>
+                    <Input
+                      placeholder="Optional"
+                      className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"
+                      value={forms[det.id]?.imprint.value || ""}
+                      onChange={(e)=> {
                       setForms(prev => ({
                         ...prev,
                         [det.id]: {
@@ -251,10 +305,11 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                         }
                       }))
                       setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes: { ...ensureAttrs(d.attributes), imprint: e.target.value } } : d))
+                      setValidationErrors(prev => ({ ...prev, [det.id]: undefined }))
                     }} />
                   </Field>
                   <div className="grid grid-cols-2 gap-2">
-                    <Field label="Shape" badge={forms[det.id]?.shape.isAutoFilled && !forms[det.id]?.shape.isEdited ? "Auto" : undefined} highlight={forms[det.id]?.shape.isAutoFilled && !forms[det.id]?.shape.isEdited ? "auto" : undefined}>
+                    <Field label="Shape*" badge={forms[det.id]?.shape.isAutoFilled && !forms[det.id]?.shape.isEdited ? "AI suggested" : undefined} highlight={forms[det.id]?.shape.isAutoFilled && !forms[det.id]?.shape.isEdited ? "auto" : undefined}>
                       <Select value={forms[det.id]?.shape.value || ""} onValueChange={(v)=> {
                         setForms(prev => ({
                           ...prev,
@@ -264,12 +319,13 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                           }
                         }))
                         setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes: { ...ensureAttrs(d.attributes), shape: v } } : d))
+                        setValidationErrors(prev => ({ ...prev, [det.id]: undefined }))
                       }}>
                         <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select shape"/></SelectTrigger>
                         <SelectContent>{SHAPE_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                       </Select>
                     </Field>
-                    <Field label="Color" badge={forms[det.id]?.color.isAutoFilled && !forms[det.id]?.color.isEdited ? "Auto" : undefined} highlight={forms[det.id]?.color.isAutoFilled && !forms[det.id]?.color.isEdited ? "auto" : undefined}>
+                    <Field label="Color*" badge={forms[det.id]?.color.isAutoFilled && !forms[det.id]?.color.isEdited ? "AI suggested" : undefined} highlight={forms[det.id]?.color.isAutoFilled && !forms[det.id]?.color.isEdited ? "auto" : undefined}>
                       <Select value={forms[det.id]?.color.value || ""} onValueChange={(v)=> {
                         setForms(prev => ({
                           ...prev,
@@ -279,6 +335,7 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                           }
                         }))
                         setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes: { ...ensureAttrs(d.attributes), color: v } } : d))
+                        setValidationErrors(prev => ({ ...prev, [det.id]: undefined }))
                       }}>
                         <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select color"/></SelectTrigger>
                         <SelectContent>
@@ -292,13 +349,13 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                     </Field>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <Field label="Size (mm)" badge={forms[det.id]?.size.isAutoFilled && !forms[det.id]?.size.isEdited ? "Auto" : undefined} highlight={forms[det.id]?.size.isAutoFilled && !forms[det.id]?.size.isEdited ? "auto" : undefined}>
+                    <Field label="Size (mm)" badge={forms[det.id]?.size.isAutoFilled && !forms[det.id]?.size.isEdited ? "AI suggested" : undefined} highlight={forms[det.id]?.size.isAutoFilled && !forms[det.id]?.size.isEdited ? "auto" : undefined}>
                       <Input
                         type="number"
                         inputMode="decimal"
                         min={0}
                         step={0.1}
-                        placeholder="Enter size in mm"
+                        placeholder="Optional"
                         value={typeof forms[det.id]?.size.value === "number" && (forms[det.id]?.size.value as number) > 0 ? (forms[det.id]?.size.value as number).toFixed(1) : (forms[det.id]?.size.value ?? "")}
                         onChange={(e)=> {
                           const v = e.target.value
@@ -328,7 +385,7 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                         className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"
                       />
                     </Field>
-                    <Field label="Scoring">
+                    <Field label="Scoring" badge={forms[det.id]?.scoring.isAutoFilled && !forms[det.id]?.scoring.isEdited ? "AI suggested" : undefined} highlight={forms[det.id]?.scoring.isAutoFilled && !forms[det.id]?.scoring.isEdited ? "auto" : undefined}>
                       <Select value={forms[det.id]?.scoring.value || "no score"} onValueChange={(v)=> {
                         setForms(prev => ({
                           ...prev,
@@ -339,7 +396,7 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                         }))
                         setDets(prev => prev.map(d => d.id===det.id ? { ...d, attributes: { ...ensureAttrs(d.attributes), scoring: v } } : d))
                       }}>
-                        <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Select scoring"/></SelectTrigger>
+                        <SelectTrigger className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm"><SelectValue placeholder="Optional"/></SelectTrigger>
                         <SelectContent>{SCORING_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                       </Select>
                     </Field>
@@ -373,18 +430,33 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
                   </Field>
                 </div>
 
-                <Button disabled={det.loading} onClick={() => { setSelectedId(det.id); setStep(3) }} className="w-full">Search Database</Button>
+                {validationErrors[det.id] && (
+                  <p className="text-xs text-red-600 font-medium">{validationErrors[det.id]}</p>
+                )}
+                <Button
+                  disabled={det.loading}
+                  onClick={() => {
+                    const shapeVal = forms[det.id]?.shape.value?.trim()
+                    const colorVal = forms[det.id]?.color.value?.trim()
+                    if (!shapeVal || !colorVal) {
+                      setValidationErrors(prev => ({ ...prev, [det.id]: 'Shape and color are required to search.' }))
+                      return
+                    }
+                    setValidationErrors(prev => ({ ...prev, [det.id]: undefined }))
+                    setSelectedId(det.id)
+                    setStep(3)
+                  }}
+                  className="w-full"
+                >
+                  Search Database
+                </Button>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
 
-      {step===2 && dets.length>3 && !showAll && (
-        <div className="text-center">
-          <Button variant="ghost" onClick={() => setShowAll(true)}>Show more</Button>
-        </div>
-      )}
+      {/* Show more removed; all detections are shown at once */}
 
       {step===3 && selected && (
         <div className="space-y-4">
