@@ -1,10 +1,4 @@
-export const SHAPE_OPTIONS = [
-  'Round',
-  'Oval',
-  'Capsule/Oblong',
-  'Rectangle',
-  'Barrel',
-] as const
+export const SHAPE_OPTIONS = ['Round', 'Oval', 'Capsule/Oblong', 'Rectangle', 'Barrel'] as const
 
 export const COLOR_SINGLE_TONE = [
   'White',

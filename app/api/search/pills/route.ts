@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid search payload' }, { status: 400 })
     }
-  const { attributes, sessionId } = parsed.data
+    const { attributes, sessionId } = parsed.data
 
     // Primary (AND) search
     const strictResults = await searchPills({
@@ -50,17 +50,17 @@ export async function POST(request: NextRequest) {
 
     // Enrich each pill with a per-pill confidence (0..1)
     const enriched = merged
-      .map(pill => ({
+      .map((pill) => ({
         ...pill,
-        confidence: computePillMatchConfidence(pill, attributes)
+        confidence: computePillMatchConfidence(pill, attributes),
       }))
       // Keep only pills with at least one attribute contributing (>0)
-      .filter(p => (p.confidence ?? 0) > 0)
+      .filter((p) => (p.confidence ?? 0) > 0)
       // Sort by confidence descending
       .sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))
 
     // Calculate confidence score based on attribute matches
-  const confidenceScore = calculateAggregateConfidence(attributes, enriched)
+    const confidenceScore = calculateAggregateConfidence(attributes, enriched)
 
     // Save the search to user_searches table for analytics
     const searchRecord = await saveUserSearch({
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       user_confirmed_shape: attributes.shape,
       user_confirmed_color: attributes.color,
       user_confirmed_imprint: attributes.imprint,
-  matched_pill_ids: enriched.map((pill) => pill.id),
+      matched_pill_ids: enriched.map((pill) => pill.id),
       confidence_score: confidenceScore,
       session_id: sessionId || generateSessionId(),
       user_agent: request.headers.get('user-agent') || undefined,
@@ -109,7 +109,8 @@ const WEIGHTS = {
 
 function computePillMatchConfidence(pill: any, attrs: MinimalAttrs): number {
   // New logic: baseline is TOTAL_WEIGHT (all attributes). Missing attributes count as zero contribution.
-  const TOTAL_WEIGHT = WEIGHTS.imprint + WEIGHTS.shape + WEIGHTS.color + WEIGHTS.size_mm + WEIGHTS.scoring
+  const TOTAL_WEIGHT =
+    WEIGHTS.imprint + WEIGHTS.shape + WEIGHTS.color + WEIGHTS.size_mm + WEIGHTS.scoring
   let matchedWeight = 0
   let consideredWeight = 0 // weights for attributes the user actually supplied (for a secondary boost)
 
@@ -170,11 +171,14 @@ function computePillMatchConfidence(pill: any, attrs: MinimalAttrs): number {
   return Math.min(1, blended)
 }
 
-function calculateAggregateConfidence(attributes: MinimalAttrs, results: Array<{ confidence?: number }>): number {
+function calculateAggregateConfidence(
+  attributes: MinimalAttrs,
+  results: Array<{ confidence?: number }>
+): number {
   if (!results.length) return 0
-  const confidences = results.map(r => typeof r.confidence === 'number' ? r.confidence : 0)
+  const confidences = results.map((r) => (typeof r.confidence === 'number' ? r.confidence : 0))
   const max = Math.max(...confidences)
-  const avg = confidences.reduce((a,b)=>a+b,0) / confidences.length
+  const avg = confidences.reduce((a, b) => a + b, 0) / confidences.length
   // Blend: 60% weight on best match, 40% on average to reflect both specificity and overall quality
   const blended = max * 0.6 + avg * 0.4
   return Math.min(1, blended)

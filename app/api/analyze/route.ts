@@ -43,7 +43,10 @@ function normalizeColor(input: unknown): string {
   }
 
   // Handle two-tone with White + allowed other color (normalized to "Color & White")
-  const parts = lower.split('&').map((p) => p.trim()).filter(Boolean)
+  const parts = lower
+    .split('&')
+    .map((p) => p.trim())
+    .filter(Boolean)
   if (parts.length >= 2) {
     const hasWhite = parts.includes('white')
     if (hasWhite) {
