@@ -88,13 +88,14 @@ export function ResultsStep({ pill, allPills, onBack, onSelectPill }: { pill: De
 }
 
 function ResultsSearch({ attributes }: { attributes: { imprint: string; shape: string; color: string; size_mm: number; scoring: string } }) {
-  const { imprint, shape, color, size_mm } = attributes
+  const { imprint, shape, color, size_mm, scoring } = attributes
   const payload: any = {
     attributes: {
       imprint: imprint || undefined,
       shape: shape || undefined,
       color: color || undefined,
-      size_mm: size_mm || undefined,
+  size_mm: size_mm || undefined,
+  scoring: scoring || undefined,
     },
     sessionId: `multi_${new Date().toISOString()}`,
   }
@@ -130,7 +131,7 @@ function ResultsSearch({ attributes }: { attributes: { imprint: string; shape: s
     }
     run()
     return () => { mounted = false }
-  }, [imprint, shape, color, size_mm])
+  }, [imprint, shape, color, size_mm, scoring])
 
   return (
     <div className="space-y-6">

@@ -48,16 +48,23 @@ export async function POST(request: NextRequest) {
     for (const p of broadResults) if (!mergedMap.has(p.id)) mergedMap.set(p.id, p)
     const merged = Array.from(mergedMap.values())
 
-    // Enrich each pill with a per-pill confidence (0..1)
-    const enriched = merged
-      .map((pill) => ({
-        ...pill,
-        confidence: computePillMatchConfidence(pill, attributes),
-      }))
-      // Keep only pills with at least one attribute contributing (>0)
-      .filter((p) => (p.confidence ?? 0) > 0)
-      // Sort by confidence descending
-      .sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))
+    // Determine if any meaningful attribute was provided (exclude scoring when it's 'no score')
+    const anyAttrProvided = !!(
+      (attributes.imprint && attributes.imprint.trim()) ||
+      (attributes.shape && attributes.shape.trim()) ||
+      (attributes.color && attributes.color.trim()) ||
+      (typeof attributes.size_mm === 'number' && attributes.size_mm > 0) ||
+      (attributes.scoring && attributes.scoring.trim() && attributes.scoring !== 'no score')
+    )
+
+    const enrichedRaw = merged.map((pill) => ({
+      ...pill,
+      confidence: computePillMatchConfidence(pill, attributes),
+    }))
+
+    const enriched = (
+      anyAttrProvided ? enrichedRaw.filter((p) => (p.confidence ?? 0) > 0) : enrichedRaw
+    ).sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))
 
     // Calculate confidence score based on attribute matches
     const confidenceScore = calculateAggregateConfidence(attributes, enriched)
