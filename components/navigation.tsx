@@ -78,7 +78,7 @@ function AboutDialog() {
           </DialogTitle>
           <DialogDescription className="text-left space-y-4 pt-4">
             <p>
-              PillSnap helps you identify medications by either typing a pill name or imprint in the search bar, or by
+              PillSnap helps you identify medications by either searching by a pill imprint, shape and color, or by
               uploading/taking a photo. The app extracts key features and searches your pill image library for likely matches.
             </p>
 
