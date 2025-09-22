@@ -150,7 +150,7 @@ function HowItWorksDialog() {
                 <div>
                   <h4 className="font-semibold text-foreground">Start Your Search</h4>
                   <p className="text-sm text-muted-foreground">
-                    Type a pill name or imprint in the search bar, or click the camera button to upload/take a photo.
+                    Search for a pill by imprint, shape and color, or click the camera button to upload/take a photo.
                   </p>
                 </div>
               </div>
