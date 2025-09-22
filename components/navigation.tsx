@@ -89,7 +89,7 @@ function AboutDialog() {
                   <Edit3 className="w-4 h-4 text-secondary mt-1 flex-shrink-0" />
                   <div>
                     <p className="font-medium text-foreground">Manual Input</p>
-                    <p className="text-sm text-muted-foreground">Type a pill name or imprint to search directly</p>
+                    <p className="text-sm text-muted-foreground">Type a pill imprint or search by pill shape and color to search directly</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
