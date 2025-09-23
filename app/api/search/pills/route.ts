@@ -25,7 +25,10 @@ export async function POST(request: NextRequest) {
     }
     const { attributes, sessionId } = parsed.data
 
-    // Primary (AND) search
+    // Tokenize imprint for multi-part matching (e.g. "BERLIN 275")
+    const imprintTokens = tokenizeImprint(attributes.imprint)
+
+    // Primary (AND) search (exact attribute filters as provided)
     const strictResults = await searchPills({
       shape: attributes.shape,
       color: attributes.color,
@@ -42,10 +45,32 @@ export async function POST(request: NextRequest) {
       scoring: attributes.scoring,
     })
 
-    // Merge and de-duplicate by id (prefer strict result object reference)
+    // Additional per-token imprint queries (only if >1 token or first token not already used)
+    const tokenResults: any[] = []
+    if (imprintTokens.length > 0) {
+      // Limit to first 4 tokens to avoid excessive round trips
+      const limited = imprintTokens.slice(0, 4)
+      for (const tok of limited) {
+        // Skip if original imprint already equals the token (would duplicate strict)
+        if (attributes.imprint && attributes.imprint.trim().toLowerCase() === tok) continue
+        try {
+          const r = await searchPills({
+            shape: attributes.shape,
+            color: attributes.color,
+            imprint: tok,
+            size_mm: attributes.size_mm,
+            scoring: attributes.scoring,
+          })
+          if (r?.length) tokenResults.push(...r)
+        } catch {}
+      }
+    }
+
+    // Merge all candidate sets
     const mergedMap = new Map<string, any>()
     for (const p of strictResults) mergedMap.set(p.id, p)
     for (const p of broadResults) if (!mergedMap.has(p.id)) mergedMap.set(p.id, p)
+    for (const p of tokenResults) if (!mergedMap.has(p.id)) mergedMap.set(p.id, p)
     const merged = Array.from(mergedMap.values())
 
     // Determine if any meaningful attribute was provided (exclude scoring when it's 'no score')
@@ -59,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     const enrichedRaw = merged.map((pill) => ({
       ...pill,
-      confidence: computePillMatchConfidence(pill, attributes),
+      confidence: computePillMatchConfidence(pill, attributes, imprintTokens),
     }))
 
     const enriched = (
@@ -114,7 +139,22 @@ const WEIGHTS = {
   scoring: 0.1,
 } as const
 
-function computePillMatchConfidence(pill: any, attrs: MinimalAttrs): number {
+// Split imprint into normalized lowercase alphanumeric tokens (max 6 to bound work)
+function tokenizeImprint(raw?: string): string[] {
+  if (!raw) return []
+  return raw
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ') // remove punctuation
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 6)
+}
+
+function computePillMatchConfidence(
+  pill: any,
+  attrs: MinimalAttrs,
+  imprintTokens?: string[]
+): number {
   // New logic: baseline is TOTAL_WEIGHT (all attributes). Missing attributes count as zero contribution.
   const TOTAL_WEIGHT =
     WEIGHTS.imprint + WEIGHTS.shape + WEIGHTS.color + WEIGHTS.size_mm + WEIGHTS.scoring
@@ -123,13 +163,23 @@ function computePillMatchConfidence(pill: any, attrs: MinimalAttrs): number {
 
   const norm = (v?: string) => (v || '').trim().toLowerCase()
 
-  // Imprint
+  // Imprint (token-aware)
   const pillImprint = norm(pill.imprint)
   const qImprint = norm(attrs.imprint)
-  if (qImprint) {
+  const tokens =
+    imprintTokens && imprintTokens.length > 0 ? imprintTokens : tokenizeImprint(qImprint)
+  if (qImprint || tokens.length > 0) {
     consideredWeight += WEIGHTS.imprint
-    if (pillImprint && (pillImprint === qImprint || pillImprint.includes(qImprint))) {
-      matchedWeight += WEIGHTS.imprint
+    if (pillImprint) {
+      if (tokens.length > 0) {
+        const matchedTokens = tokens.filter((t: string) => pillImprint.includes(t)).length
+        if (matchedTokens > 0) {
+          const ratio = matchedTokens / tokens.length
+          matchedWeight += WEIGHTS.imprint * Math.min(1, ratio)
+        }
+      } else if (pillImprint === qImprint || pillImprint.includes(qImprint)) {
+        matchedWeight += WEIGHTS.imprint
+      }
     }
   }
 
