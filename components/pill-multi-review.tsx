@@ -207,6 +207,13 @@ export function PillMultiReview({ onFlowStepChange }: { onFlowStepChange?: (step
         </Card>
       )}
 
+      {step===1 && !uploaded && (
+        <div className="text-center text-sm text-muted-foreground">
+          For demo purposes, you can download a sample set of pill images here:
+          {' '}<a href="/demo/pill-images.zip" className="underline hover:text-foreground" download>Download sample images</a>.
+        </div>
+      )}
+
       {processing && step!==3 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
